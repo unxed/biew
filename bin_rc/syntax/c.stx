@@ -1,5 +1,5 @@
 ;
-; C syntax definition for beye project
+; C syntax definition for biew project
 ;
 #set CPP_TYPE = reserved
 #set CPP_CMT = reserved

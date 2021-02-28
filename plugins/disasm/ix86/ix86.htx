@@ -1,0 +1,1883 @@
+ Intel x86 assembly reference 
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³                                 %B4004%b                                    ³
+³ %IThe first microprocessor designed by Intel in 1969%i                      ³
+³ This processor (same as 8085 and 8080) is not supported by BIEW         ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³               %IDecoding instructions%i                                     ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ Prefix AddrSize DataSize SegOverload COP ModRM SIB Disp Imm             ³
+³  0-1      0-1      0-1        0-1    1-2  0-1  0-1 0-4  0-4 <= 15 bytes ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ Example : USE16;  F0 66 67 26 C7 A4 82 78 56 34 12 78 56 34 12          ³
+³                   lock mov dword [es:edx+eax*4+12345678H],12345678H     ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ %IPrefix%i      one of   : rep, repne, lock                      (optional) ³
+³ %IAddrSize%i             : 67H   { [bx][si] <-> [eax] }          (optional) ³
+³ %IDataSize%i             : 66H   { ax <-> eax }                  (optional) ³
+³ %ISegOverload%i one of   : cs:, ds:, es:, fs:, gs:, ss:          (optional) ³
+³ %UCOP%u                  : Code OPeration                        see above  ³
+³                          xxxxxxdw                                       ³
+³                                ³À Word                                  ³
+³                                ³    0 - DataSize = 8         (optional) ³
+³                                ³    1 - DataSize = (32)16               ³
+³                                À Direction                   (optional) ³
+³                                   0 - op   r/m,reg                      ³
+³                                   1 - op   reg,r/m                      ³
+³                                                                         ³
+³ %IModRM%i                : MODe Registers or Memory              (optional) ³
+³                        7 6  |  5 4 3  |  2 1 0                          ³
+³                        MOD  | REG/COP+|   R/M                           ³
+³ÉÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÑÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÑÍÍÍÍÑÍÍÍÑÍÍÍÍÍÑÍÍÍÍÍÑÍÍÍÍÍÍ»³
+³º MOD  ³   00,01,10   ³11 º       ³ Custom  ³    ³crx³ FPU ³ MMX ³ SSE  º³
+³º R/M  ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´   º  REG  ÃÄÄÄÄÄÄÄÄÄ´ Xs ³trxÃÄÄÄÄÄÅÄÄÄÄÄÅÄÄÄÄÄÄ¶³
+³º      ³ Address Size ³   º       ³ DataSize³    ³drx³ /rm ³/reg ³ /rm  º³
+³ÇÄÄÄÂÄÄÅÄÄÄÄÄÄÄÄÂÄÄÄÄÄ´   ºÄÄÄÂÄÄÄÅÄÄÂÄÄÂÄÄÄÅÄÄÄÄÅÄÄÄÅÄÄÄÄÄÅÄÄÄÄÄÅÄÄÄÄÄÄ¶³
+³ºBin³Hx³   16   ³  32 ³   ºBin³Hex³8 ³16³ 32³ 16 ³ 32³ 80  ³ 64  ³ 128  º³
+³ÇÄÄÄÁÄÄÅÄÄÄÄÄÄÄÄÅÄÄÄÄÄÅÄÄÄ×ÄÄÄÁÄÄÄÅÄÄÅÄÄÅÄÄÄÅÄÄÄÄÅÄÄÄÅÄÄÄÄÄÅÄÄÄÄÄÅÄÄÄÄÄÄ¶³
+³º000|00³[bx][si]³[eax]³ R º000|00 ³al³ax³eax³ es ³xr0³ st0 ³ mm0 ³ xmm0 º³
+³º001|01³[bx][di]³[ecx]³ E º001|08 ³cl³cx³ecx³ cs ³xr1³ st1 ³ mm1 ³ xmm1 º³
+³º010|02³[bp][si]³[edx]³ G º010|10 ³dl³dx³edx³ ss ³xr2³ st2 ³ mm2 ³ xmm2 º³
+³º011|03³[bp][di]³[ebx]³ i º011|18 ³bl³bx³ebx³ ds ³xr3³ st3 ³ mm3 ³ xmm3 º³
+³º100|04³  [si]  ³ SIB ³ s º100|20 ³ah³sp³esp³ fs ³xr4³ st4 ³ mm4 ³ xmm4 º³
+³º101|05³  [di]  ³  *  ³ t º101|28 ³ch³bp³ebp³ gs ³xr5³ st5 ³ mm5 ³ xmm5 º³
+³º110|06³   *    ³[esi]³ e º110|30 ³dh³si³esi³ ?s ³xr6³ st6 ³ mm6 ³ xmm6 º³
+³º111|07³  [bx]  ³[edi]³ r º111|38 ³bh³di³edi³ ?s ³xr7³ st7 ³ mm7 ³ xmm7 º³
+³ÈÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÏÍÍÍÍÍÏÍÍÍÊÍÍÍÍÍÍÍÏÍÍÏÍÍÏÍÍÍÏÍÍÍÍÏÍÍÍÏÍÍÍÍÍÏÍÍÍÍÍÏÍÍÍÍÍÍ¼³
+³  * disp(32)16 if MOD == 00 [(e)bp] otherwise                            ³
+³  if MOD == 00 |00 Full address = R/M                                    ³
+³  if MOD == 01 |40 Full address = R/M + disp8                            ³
+³  if MOD == 10 |80 Full address = R/M + disp(32)16                       ³
+³  if MOD == 11 |C0 Full address = REG                                    ³
+³                                                                         ³
+³ %RSIB%r                  :  Scale sibling, Index,  Base          (optional) ³
+³                        7 6  |  5 4 3  |  2 1 0                          ³
+³                         SS  |  Index  |  Base                           ³
+³             ÚÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿ ÚÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄ¿               ³
+³             ³ Index ³               ³ ³ Base  ³         ³               ³
+³             ÃÄÄÄÂÄÄÄ´    IAddress   ³ ÃÄÄÄÂÄÄÄ´  BAddr  ³               ³
+³             ³Bin³Hex³               ³ ³Bin³Hex³         ³               ³
+³             ÃÄÄÄÁÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´ ÃÄÄÄÁÄÄÄÅÄÄÄÄÄÄÄÄÄ´               ³
+³             ³000 |00³  [eax*2**SS]  ³ ³000 |00³  [eax]  ³               ³
+³             ³001 |08³  [ecx*2**SS]  ³ ³001 |01³  [ecx]  ³               ³
+³             ³010 |10³  [edx*2**SS]  ³ ³010 |02³  [edx]  ³               ³
+³             ³011 |18³  [ebx*2**SS]  ³ ³011 |03³  [ebx]  ³               ³
+³             ³100 |20³               ³ ³100 |04³  [esp]  ³               ³
+³             ³101 |28³  [ebp*2**SS]  ³ ³101 |05³  [ebp]  ³               ³
+³             ³110 |30³  [esi*2**SS]  ³ ³110 |06³  [esi]  ³               ³
+³             ³111 |38³  [edi*2**SS]  ³ ³111 |07³  [edi]  ³               ³
+³             ÀÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ ÀÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÙ               ³
+³                    Full address = IAddress + BAddr                      ³
+³                                                                         ³
+³ %IDisp%i                 : DISPlacement(8,16,32)                 (optional) ³
+³ %IImm%i                  : IMMediate   (8,16,32)                 (optional) ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³               %ICPU registers%i                                             ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ %Ibyte registers%i:          ah, al, bh, bl, ch, cl, dh, dl                 ³
+³ %Iword registers%i:          ax, bx, cx, dx, si, di, sp, bp, flags          ³
+³ %Isegment registers%i:       cs, ds, es, ss                                 ³
+³ %I386 dword registers%i:     eax, ebx, ecx, edx, esi, edi, ebp, esp, eflags ³
+³ %I386 segment registers%i:   fs, gs                                         ³
+³ %I32bit control registers%i: cr0-cr7                                        ³
+³ %I32bit debug registers%i:   dr0-dr7                                        ³
+³ %I32bit trace registers%i:   tr0-tr7                                        ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ %IFPU registers%i: st(0), st(1), st(2), st(3), st(4), st(5), st(6), st(7)   ³
+³ %IMMX registers%i: mm0, mm1, mm2, mm3, mm4, mm5, mm6, mm7                   ³
+³ %ISSE registers%i: xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7           ³
+³ %IAVX registers%i: ymm0, ymm1, ymm2, ymm3, ymm4, ymm5, ymm6, ymm7           ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³               %IInstruction decoding in 64-bit mode%i                       ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ %IThe segments %BCS:, DS:, ES:%b are treated as NULL prefixes%i                 ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ %IThe new set of registers:%i                                               ³
+³ %BByte GPR registers%b:                                                     ³
+³ ah, dh, ch, dh %Ican be accessed without REX only%i                         ³
+³ al, dl, cl, dl, sil, dil, bpl, spl, r8b-r15b                            ³
+³ %BWord GPR registers%b: ax, dx, cx, dx, si, di, bp, sp, r8w-r15w            ³
+³ %BDword GPR registers%b: eax, edx, ecx, edx, esi, edi, ebp, esp, r8d-r15d   ³
+³ %BQword GPR registers%b: rax, rdx, rcx, rdx, rsi, rdi, rbp, rsp, r8-r15     ³
+³ %IFPU registers%i: st(0), st(1), st(2), st(3), st(4), st(5), st(6), st(7)   ³
+³ %IMMX registers%i: mm0, mm1, mm2, mm3, mm4, mm5, mm6, mm7                   ³
+³ %ISSE 128-bit registers%i: xmm0-xmm15                                       ³
+³ %IAVX 256-bit registers:%i ymm0-ymm15                                       ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ Prefixes  REX  COP  ModRM  SIB  Disp  Imm                               ³
+³  0-4      0-1  1-2  0-1    0-1  0-4   0-8 <= 15 bytes                   ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ Examples: USE64;  F0 %U66 41%u 64 C7 A4 82 12 34 56 78 12 34                ³
+³                   lock mov %Iword%i [fs:rax*4+r10+78563412H],3412H          ³
+³                                                                         ³
+³           USE64;  F0 %U41%u 64 C7 A4 82 12 34 56 78 12 34 56 78             ³
+³                   lock mov %Idword%i [fs:rax*4+r10+78563412H],78563412H     ³
+³                                                                         ³
+³           USE64;  F0 %U67 41%u 64 C7 A4 82 12 34 56 78 12 34 56 78          ³
+³                   lock mov %Idword%i [fs:eax*4+r10d+78563412H],78563412H    ³
+³                                                                         ³
+³           USE64;  F0 %U67 49%u 64 C7 A4 82 12 34 56 78 12 34 56 78          ³
+³                   lock mov %Iqword%i [fs:eax*4+r10d+78563412H],78563412H    ³
+³                                                                         ³
+³           USE64;  F0 %U49%u 64 C7 A4 82 12 34 56 78 12 34 56 78             ³
+³                   lock mov %Iqword%i [fs:rax*4+r10+78563412H],78563412H     ³
+³                                                                         ³
+³           USE64;  4%U8%u 68 %U12 34 56 78 90 AB CD EF%u                         ³
+³                   push EFCDAB9078563412H                                ³
+³                                                                         ³
+³           USE64;  4%U1%u 56                                                 ³
+³                   push r14d                                             ³
+³                                                                         ³
+³           USE64;  49 56                                                 ³
+³                   push r14                                              ³
+³                                                                         ³
+³           USE64;  %U49 A1%u 12 34 56 78 90 AB CD EF                         ³
+³                   mov rax,[EFCDAB9078563412H]                           ³
+³                                                                         ³
+³           USE64;  4%U9%u B9 %U12 34 56 78 90 AB CD EF%u                         ³
+³                   mov r9,EFCDAB9078563412H                              ³
+³                                                                         ³
+³           USE64;  44 89 %U25%u 9C 35 10 00                                  ³
+³                   mov [%Irip%i+0010359C], r12d                              ³
+³                                                                         ³
+³           USE64;  %U66 67 45%u 89 23                                        ³
+³                   mov [r11d], r12w                                      ³
+³                                                                         ³
+³           USE64;  FF C9                                                 ³
+³                   dec ecx                                               ³
+³                                                                         ³
+³           USE64;  49 %UFF C7%u                                              ³
+³                   inc r15                                               ³
+³                                                                         ³
+³           USE64;  %U66 66 66%u 90                                           ³
+³                   nop                                                   ³
+³                                                                         ³
+³           USE64;  41 8B %U4%uD 00                                           ³
+³                   mov  ecx, [r13+00] ; r13 addressing limitations       ³
+³                                                                         ³
+³           USE64;  49 8B %U04 25%u 12 34 56 78                               ³
+³                   mov  rax, [+78563412] ; using absolute 32-bit address ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ %IREX%i decoding:                                                           ³
+³ REX uses the range from 40H upto 4FH codes:                             ³
+³ %BBits%b   definition:                                                      ³
+³ %I4-7%i    0100 means REX prefix is present                                 ³
+³ %I3%i      rex.w (extension to the operand Width)                           ³
+³ %I2%i      rex.r (extension to the ModRM/REG)                               ³
+³ %I1%i      rex.x (extsnsion to the SIB indeX)                               ³
+³ %I0%i      rex.b (extension to the Base)                                    ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ %IPrefixes%i  up to 4 of : rep, repne, lock, 66H, 67H, fs:, gs:  (optional) ³
+³ %IREX%i                  : 40H-4FH                               (optional) ³
+³ %UCOP%u                  : Code OPeration                        see above  ³
+³                          xxxxxxdw                                       ³
+³                                ³À Word                                  ³
+³                                ³    0 - DataSize = 8         (optional) ³
+³                                ³    1 - DataSize = (32)16               ³
+³                                À Direction                   (optional) ³
+³                                   0 - op   r/m,reg                      ³
+³                                   1 - op   reg,r/m                      ³
+³                                                                         ³
+³ %IModRM%i                : MODe Registers or Memory              (optional) ³
+³                        7 6  |  5 4 3  |  2 1 0                          ³
+³                        MOD  | REG/COP+|   R/M                           ³
+³ÉÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÑÍÍËÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÑÍÍÍÑÍÍÍÑÍÍÍÍÍ»³
+³º MOD     ³00,01,10    ³11º         ³       Custom        ³FPU³MMX³ SSE º³
+³º         ÃÄÄÄÄÄÄÄÄÄÄÄÄ´  º         ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÅÄÄÄÅÄÄÄÄÄ¶³
+³ºrex.b*8  ³  Address   ³  º reg.r*8 ³                     ³/rm³reg³ /rm º³
+³º+R/M     ³   Size     ³  º  +REG   ³     DataSize        ³   ³   ³     º³
+³ÇÄÄÄÄÂÄÄÄÄÅÄÄÄÄÄÄÂÄÄÄÄÄ´  ÇÄÄÄÄÂÄÄÄÄÅÄÄÂÄÄÄÄÂÄÄÄÄÂÄÄÄÄÂÄÄÄÅÄÄÄÅÄÄÄÅÄÄÄÄÄ¶³
+³ºBin ³Hex ³   32 ³ 64  ³  ºBin ³Hex ³8 ³  8 ³ 16 ³ 32 ³ 64³80 ³64 ³ 128 º³
+³ÇÄÄÄÄÁÄÄÄÄÅÄÄÄÄÄÄÅÄÄÄÄÄÅÄÄ×ÄÄÄÄÁÄÄÄÄÅÄÄÅÄÄÄÄÅÄÄÄÄÅÄÄÄÄÅÄÄÄÅÄÄÄÅÄÄÄÅÄÄÄÄÄ¶³
+³º0000 0|00³ [eax]³[rax]³ Rº0000 0|00³ah³ al ³  ax³ ecx³rax³st0³mm0³xmm0 º³
+³º0001 0|01³ [ecx]³[rcx]³  º0001 0|08³ch³ cl ³  cx³ ecx³rcx³st1³mm1³xmm1 º³
+³º0010 0|02³ [edx]³[rdx]³ Eº0010 0|10³dh³ dl ³  dx³ edx³rdx³st2³mm2³xmm2 º³
+³º0011 0|03³ [ebx]³[rbx]³  º0011 0|18³bh³ bl ³  bx³ ebx³rbx³st3³mm3³xmm3 º³
+³º0100 0|04³  SIB ³ SIB ³ Gº0100 0|20³  ³ spl³  sp³ esp³rsp³st4³mm4³xmm4 º³
+³º0101 0|05³   *  ³  *  ³  º0101 0|28³  ³ bpl³  bp³ ebp³rbp³st5³mm5³xmm5 º³
+³º0110 0|06³ [esi]³[rsi]³ iº0110 0|30³  ³ sil³  si³ esi³rsi³st6³mm6³xmm6 º³
+³º0111 0|07³ [edi]³[rdi]³  º0111 0|38³  ³ dil³  di³ edi³rdi³st7³mm7³xmm7 º³
+³º1000 1|00³ [r8d]³[r8] ³ sº1000 1|00³  ³ r8b³ r8w³ r8d³r8 ³   ³   ³xmm8 º³
+³º1001 1|01³ [r9d]³[r9] ³  º1001 1|08³  ³ r9b³ r9w³ r9d³r9 ³   ³   ³xmm9 º³
+³º1010 1|02³[r10d]³[r10]³ tº1010 1|10³  ³r10b³r10w³r10d³r10³   ³   ³xmm10º³
+³º1011 1|03³[r11d]³[r11]³  º1011 1|18³  ³r11b³r11w³r11d³r11³   ³   ³xmm11º³
+³º1100 1|04³  SIB ³ SIB ³ eº1100 1|20³  ³r12b³r12w³r12d³r12³   ³   ³xmm12º³
+³º1101 1|05³  *   ³  *  ³  º1101 1|28³  ³r13b³r13w³r13d³r13³   ³   ³xmm13º³
+³º1110 1|06³[r14d]³[r14]³ rº1110 1|30³  ³r14b³r14w³r14d³r14³   ³   ³xmm14º³
+³º1111 1|07³[r15d]³[r15]³  º1111 1|38³  ³r15b³r15w³r15d³r15³   ³   ³xmm15º³
+³ÈÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÏÍÍÍÍÍÏÍÍÊÍÍÍÍÍÍÍÍÍÏÍÍÏÍÍÍÍÏÍÍÍÍÏÍÍÍÍÏÍÍÍÏÍÍÍÏÍÍÍÏÍÍÍÍÍ¼³
+³  * rip+disp32 if MOD == 00; [(e)bp] otherwise                           ³
+³  if MOD == 00 |00 Full address = R/M                                    ³
+³  if MOD == 01 |40 Full address = R/M + disp8                            ³
+³  if MOD == 10 |80 Full address = R/M + disp32                           ³
+³  if MOD == 11 |C0 Full address = REG                                    ³
+³                                                                         ³
+³ %RSIB%r                  :  Scale sibling, Index,  Base          (optional) ³
+³                        7 6  |  5 4 3  |  2 1 0                          ³
+³                         SS  |  Index  |  Base                           ³
+³   ÚÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿ ÚÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿   ³
+³   ³ rex.x*8 ³                         ³ ³ rex.b*8 ³                 ³   ³
+³   ³ +Index  ³         IAddress        ³ ³ +Base   ³      BAddr      ³   ³
+³   ÃÄÄÄÄÂÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄ´ ÃÄÄÄÄÂÄÄÄÄÅÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄ´   ³
+³   ³Bin ³Hex ³     32     ³     64     ³ ³Bin ³Hex ³    32  ³   64   ³   ³
+³   ÃÄÄÄÄÁÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄ´ ÃÄÄÄÄÁÄÄÄÄÅÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄ´   ³
+³   ³0000 0|00³ [eax*2**SS]³ [rax*2**SS]³ ³0000 0|00³  [eax] ³  [rax] ³   ³
+³   ³0001 0|08³ [ecx*2**SS]³ [rcx*2**SS]³ ³0001 0|01³  [ecx] ³  [rcx] ³   ³
+³   ³0010 0|10³ [edx*2**SS]³ [rdx*2**SS]³ ³0010 0|02³  [edx] ³  [rdx] ³   ³
+³   ³0011 0|18³ [ebx*2**SS]³ [rbx*2**SS]³ ³0011 0|03³  [ebx] ³  [rbx] ³   ³
+³   ³0100 0|20³            ³            ³ ³0100 0|04³ *[esp] ³ *[rsp] ³   ³
+³   ³0101 0|28³ [ebp*2**SS]³ [rbp*2**SS]³ ³0101 0|05³  [ebp] ³  [rbp] ³   ³
+³   ³0110 0|30³ [esi*2**SS]³ [rsi*2**SS]³ ³0110 0|06³  [esi] ³  [rsi] ³   ³
+³   ³0111 0|38³ [edi*2**SS]³ [rdi*2**SS]³ ³0111 0|07³  [edi] ³  [rdi] ³   ³
+³   ³1000 1|00³ [r8d*2**SS]³  [r8*2**SS]³ ³1000 1|00³  [r8d] ³   [r8] ³   ³
+³   ³1001 1|08³ [r9d*2**SS]³  [r9*2**SS]³ ³1001 1|01³  [r9d] ³   [r9] ³   ³
+³   ³1010 1|10³[r10d*2**SS]³ [r10*2**SS]³ ³1010 1|02³ [r10d] ³  [r10] ³   ³
+³   ³1011 1|18³[r11d*2**SS]³ [r11*2**SS]³ ³1011 1|03³ [r11d] ³  [r11] ³   ³
+³   ³1100 1|20³            ³            ³ ³1100 1|04³*[r12d] ³ *[r12] ³   ³
+³   ³1101 1|28³[r13d*2**SS]³ [r13*2**SS]³ ³1101 1|05³ [r13d] ³  [r13] ³   ³
+³   ³1110 1|30³[r14d*2**SS]³ [r14*2**SS]³ ³1110 1|06³ [r14d] ³  [r14] ³   ³
+³   ³1111 1|38³[r15d*2**SS]³ [r15*2**SS]³ ³1111 1|07³ [r15d] ³  [r15] ³   ³
+³   ÀÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÙ ÀÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÙ   ³
+³     * disp32 if MOD == 0  (same as in 32-bit mode)                      ³
+³                    Full address = IAddress + BAddr                      ³
+³                                                                         ³
+³ %IDisp%i                 : DISPlacement(8,32)                    (optional) ³
+³ %IImm%i                  : IMMediate   (8,16,32,64)              (optional) ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³                             %ICPU families%i                                ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ a - AMD                                                                 ³
+³ C - Cyrix                                                               ³
+³ i - Intel                                                               ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³                             %IAbbreviation%i                                ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ %ISI%i        - signed                                                      ³
+³ %IUS%i        - unsigned                                                    ³
+³ %IS8%i        - 8-bit signed integer                                        ³
+³ %IS16%i       - 16-bit signed integer                                       ³
+³ %IS32%i       - 32-bit signed integer                                       ³
+³ %IS64%i       - 64-bit signed integer                                       ³
+³ %IS128%i      - 128-bit signed integer                                      ³
+³ %IU8%i        - 8-bit unsigned integer                                      ³
+³ %IU16%i       - 16-bit unsigned integer                                     ³
+³ %IU32%i       - 32-bit unsigned integer                                     ³
+³ %IU64%i       - 64-bit unsigned integer                                     ³
+³ %IU128%i      - 128-bit unsigned integer                                    ³
+³ %IF16%i       - 16-bit floating point                                       ³
+³ %IF32%i       - 32-bit floating point                                       ³
+³ %IF64%i       - 64-bit floating point                                       ³
+³ %IF128%i      - 128-bit floating point                                      ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ %IALU%i - Arithmetic Logic Unit                                             ³
+³ %IBranch prediction%i is a concept found in most mainframe and high-speed   ³
+³ microprocessor architectures. It allows the processor to decode         ³
+³ instructions beyond branches to keep the instruction pipeline full.     ³
+³ %IBus Interface Unit%i accesses memory and I/O for the other units          ³
+³ %ICode Prefetch Unit%i receives object code from the bus unit and puts      ³
+³ it into a 16-byte queue                                                 ³
+³ %IInstruction Decode Unit%i decodes object code from the prefetch unit      ³
+³ into microcode                                                          ³
+³ %IDynamic Data Flow Analysis%i involves real-time analysis of the flow of   ³
+³ data through the processor to determine data and register dependencies  ³
+³ and to detect opportunities for out-of-order instruction execution.     ³
+³ %IExecution Unit%i executes the microcode instructions                      ³
+³ %IOut-Of-Order%i execution core can simultaneously monitor many instructions³
+³ and execute these instructions in the order that optimizes the use of   ³
+³ the processor's multiple execution units, while maintaining the data    ³
+³ integrity. This out-of-order execution keeps the execution units busy   ³
+³ even when cache misses and data dependencies among instructions occur.  ³
+³ %IPaging Unit%i - translates linear addresses to physical addresses, does   ³
+³ page based protection checks, and contains a cache with information     ³
+³ about most recently accessed pages                                      ³
+³ %ISegment Unit%i translates logical addresses to linear addresses and does  ³
+³ protection checks                                                       ³
+³ %ISpeculative execution%i refers to the processor's ability to execute      ³
+³ instructions that lie beyond a conditional branch that has not yet been ³
+³ resolved, and ultimately to commit the results in the order of the      ³
+³ original instruction stream.                                            ³
+³ %IRetirement unit%i linearly searches the instruction pool for completed    ³
+³ instructions that no longer have data dependencies with other           ³
+³ instructions or unresolved branch predictions.                          ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³                    %B8086 instruction mnemonics%b                           ³
+³ %IWas born in 1978 and was the first actual processor in the IA family%i    ³
+³ %IHas 16-bit registers and a 16-bit external data bus, with 20-bit%i        ³
+³ %Iaddressing giving a 1-MByte address space. The%i %B8088%b%I is identical except%i ³
+³ %Ifor a smaller external data bus of 8 bits.%i                              ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ aaa   [37]                          ASCII Adjust after Addition         ³
+³ aad   [D5]                          ASCII Adjust AX before Division     ³
+³ aam   [D4]                          ASCII Adjust AX after Multiply      ³
+³ aas   [3F]                          ASCII Adjust AL after Subtraction   ³
+³ adc   [10-15;(80-83)/2]             ADD with Carry                      ³
+³ add   [00-05;(80-83)/0]             ADD                                 ³
+³ and   [20-25;(80-83)/4]             Logical AND                         ³
+³ call  [E8;9A;FF(/2,/3)]             Call Procedure                      ³
+³ cbw   [98]                          Convert Byte to Word                ³
+³ clc   [F8]                          Clear Carry Flag                    ³
+³ cld   [FC]                          Clear Direction Flag                ³
+³ cli   [FA]                          Clear Interrupt Flag                ³
+³ cmc   [F5]                          Complement Carry Flag               ³
+³ cmp   [38-3D;(80-83)/7]             Compare Two Operands                ³
+³ cmpsb [A6]                          Compare S8 String Operands          ³
+³ cmpsw [A7]                          Compare S16 String Operands         ³
+³ cwd   [99]                          Convert S6 to S32                   ³
+³ daa   [27]                          Decimal Adjust AL after Addition    ³
+³ das   [2F]                          Decimal Adjust AL after Substraction³
+³ dec   [48;(FE,FF)/1]                Decrement by 1                      ³
+³ div   [(F6,F7)/6]                   US byte or word Divide              ³
+³ hlt   [F4]                          Halt the Processor                  ³
+³ idiv  [(F6,F7)/7]                   SI byte or word Divide              ³
+³ imul  [(F6,F7)/5]                   SI byte or word Multiply            ³
+³ in    [E4;E5;EC;ED]                 Input From Port                     ³
+³ inc   [40;(FE,FF)/0]                Increment by 1                      ³
+³ int   [CC;CD]                       Interrupt                           ³
+³ into  [CE]                          Interrupt 4 on Overflow             ³
+³ iret  [CF]                          Interrupt Return                    ³
+³ ja    [77]                          Jump if Above (CF=0,ZF=0)           ³
+³ jae   [73]                          Jump if Above or Equal (CF=0)       ³
+³ jc    [72]                          Jump if Carry (CF=1)                ³
+³ jcxz  [E3]                          Jump if CX Register Zero (CX=0)     ³
+³ je    [74]                          Jump if Equal (ZF=1)                ³
+³ jg    [7F]                          Jump if Greater (ZF=0,SF=OF)        ³
+³ jl    [7C]                          Jump if Less (SF<>OF)               ³
+³ jle   [7E]                          Jump if Less or Equal (SF<>OF,ZF=1) ³
+³ jna   [76]                          Jump if Not Above (CF=1,ZF=1)       ³
+³ jne   [75]                          Jump if Not Equal (ZF=0)            ³
+³ jnl   [7D]                          Jump if Not Less (SF=OF)            ³
+³ jno   [71]                          Jump if No Overflow (OF=0)          ³
+³ jnp   [7B]                          Jump if No Parity (PF=0)            ³
+³ jns   [79]                          Jump if No Sign (SF=0)              ³
+³ jo    [70]                          Jump if Overflow (OF=1)             ³
+³ jp    [7A]                          Jump if Parity (PF=1)               ³
+³ js    [78]                          Jump if Sign (SF=1)                 ³
+³ jmp   [E9;EA;EB;FF(/4,/5)]          Unconditional Jump                  ³
+³ lahf   [9F]                         Load Flags into AH Register         ³
+³ lds    [C5]                         Load Pointer to DS                  ³
+³ lea    [8D]                         Load Effective Address              ³
+³ les    [C4]                         Load Pointer to ES                  ³
+³ lock   [F0]                         Assert LOCK# Signal Prefix          ³
+³ lodsb  [AC]                         Load S8 String Operand              ³
+³ lodsw  [AD]                         Load S16 String Operand             ³
+³ loop   [E2]                         Loop Count                          ³
+³ loopnz [E0]                         Loop Count while no Zero (CX<>0,ZF=0³
+³ loopz  [E1]                         Loop Count while Zero (CX<>0,ZF=1)  ³
+³ mov    [88-8C;8E;A0-A3;B0-B8;C6;C7] Move Data                           ³
+³ movsb  [A4]                         Move Data from Byte String to String³
+³ movsw  [A5]                         Move Data from Word String to String³
+³ mul    [(F6,F7)/4]                  US byte or word Multiply            ³
+³ neg    [(F6,F7)/3]                  Two's Complement Negation           ³
+³ nop    [90]                         No Operation                        ³
+³ not    [(F6,F7)/2]                  One's Complement Negation           ³
+³ or     [(08-0D);(80-83)/1]          Logical Inclusive OR                ³
+³ out    [E6;E7;EE;EF]                Output to Port                      ³
+³ pop    [07;17;1F;58+r;8F/0]         Pop a Data from the Stack           ³
+³ popf   [9D]                         Pop Stack into Flags Register       ³
+³ push   [06;0E;16;1E;50+r;FF/6]      Push Data onto the Stack            ³
+³ pushf  [9C]                         Push Flags Register onto the Stack  ³
+³ rcl    [(D0-D3)/2]                  Rotate thru Carry Left              ³
+³ rcr    [(D0-D3)/3]                  Rotate thru Carry Right             ³
+³ rep    [F3]                         Repeate (CX<>0)                     ³
+³ repne  [F2]                         Repeate while not Equal (CX<>0,ZF=1)³
+³ ret    [C2;C3;CA;CB]                Return from Procedure               ³
+³ rol    [(D0-D3)/0]                  Rotate Left                         ³
+³ ror    [(D0-D3)/1]                  Rotate Right                        ³
+³ sahf   [9E]                         Store AH into Flags                 ³
+³ sar    [(D0-D3)/7]                  Shift Arithmetic Right              ³
+³ sbb    [(18-1D);(80-83)/3]          Integer Substraction with Borrow    ³
+³ scasb  [AE]                         Scan S8 String                      ³
+³ scasw  [AF]                         Scan S16 String                     ³
+³ shl    [(D0-D3)/4]                  Shift Left                          ³
+³ shr    [(D0-D3)/5]                  Shift Right                         ³
+³ stc    [F9]                         Set Carry Flag                      ³
+³ std    [FD]                         Set Direction Flag                  ³
+³ sti    [FB]                         Set Interrupt Flag                  ³
+³ stosb  [AA]                         Store Data into the S8 String       ³
+³ stosw  [AB]                         Store Data into the S16 String      ³
+³ sub    [(28-2D);(80-83)/5]          Integer Substraction                ³
+³ test   [A8;A9;84;85;(F6,F7)/0]      Logical Compare                     ³
+³ wait   [9B]                         Enter the Processor to a wait state ³
+³ xchg   [86;87;90+r]                 Exchange Register with Regsiter/Mem ³
+³ xlat   [D7]                         Table Look-up Translation           ³
+³ xor    [(30-35);(80-83)/6]          Logical Exclusive OR                ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ Prefixes:   es:  [26]             ss: [36]                              ³
+³             cs:  [2E]             ds: [3E]                              ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ Undocumented :                                                          ³
+³ salc   [D6]                         Set AL on Carry                     ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³                       %B8087 instruction mnemonics%b                        ³
+³ %IThe 8087 numeric processor extension (NPX) was designed for use in%i %B8086%b%I-%i³
+³ %Ifamily systems. The%i %B8086%b %Iwas the first microprocessor family to%i         ³
+³ %Ipartition the processing unit to permit high-performance numeric%i        ³
+³ %Icapabilities. The 8087 NPX for this processor family implemented a%i      ³
+³ %Icomplete numeric processing environment in compliance with an early%i     ³
+³ %Iproposal for IEEE Standard 754 for Binary Floating-Point Arithmetic.%i    ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ f2xm1   [D9_F0]                     Compute 2**st0 - 1                  ³
+³ fabs    [D9_E1]                     Absolute Value                      ³
+³ fadd    [(D8,DC)/0;D8,DC_C0+i]      Add                                 ³
+³ faddp   [DE_Ci]                     Add and Pop                         ³
+³ fbld    [DF/4]                      Load Binary Coded Decimal           ³
+³ fbstp   [DF/6]                      Store Binary Coded Decimal and Pop  ³
+³ fchs    [D9_E0]                     Change Sign                         ³
+³ fclex   [DB_E2]                     Clear Exceptions                    ³
+³ fcom    [(D8,DC)/2;D8_D0+i]         Compare Real                        ³
+³ fcomp   [(D8,DC)/3;D8_D8+i]         Compare Real and Pop                ³
+³ fcompp  [DE_D9]                     Compare Real and Pop Twice          ³
+³ fdecstp [D9_F6]                     Decrement Stack-Top Pointer         ³
+³ fdisi   [DB_E1]                     Disable Interrupt                   ³
+³ fdiv    [(D8,DC)/6,D8_F0+i;DC_F8+i] Divide                              ³
+³ fdivp   [DE_F8+i]                   Divide and Pop                      ³
+³ fdivr   [(D8,DC)/7,D8_F8+i;DC_F0+i] Reverse Divide                      ³
+³ fdivrp  [DE_F0+i]                   Reverse Divide and Pop              ³
+³ feni    [DB_E0]                     Enable Interrupt                    ³
+³ ffree   [DD_C0+i]                   Free st(i) Register                 ³
+³ fiadd   [(DA,DE)/0]                 Add Integer                         ³
+³ ficom   [(DA,DE)/2]                 Compare Integer                     ³
+³ ficomp  [(DA,DE)/3]                 Compare Integer and Pop             ³
+³ fidiv   [(DA,DE)/6]                 Divide Integer                      ³
+³ fidivr  [(DA,DE)/7]                 Reverse Devide Integer              ³
+³ fild    [DB/0;DF(/0,/5)]            Load Integer                        ³
+³ fimul   [(DA,DE)/1]                 Multiply Integer                    ³
+³ fincstp [D9_F7]                     Increment Stack-Top Pointer         ³
+³ finit   [DB_E3]                     Initialize Floating Point Unit      ³
+³ fist    [(DB,DF)/2]                 Store Integer                       ³
+³ fistp   [(DB,DF)/3]                 Store Integer and Pop               ³
+³ fisub   [(DA,DE)/4]                 Substract Integer                   ³
+³ fisubr  [(DA,DE)/5]                 Reverse Substract Integer           ³
+³ fld     [D9/0;DB/5;DD/0;D9_C0+i]    Load Real                           ³
+³ fld1    [D9_E8]                     Load +1.0 into st(0)                ³
+³ fldcw   [D9/5]                      Load Control Word                   ³
+³ fldenv  [D9/4]                      Load FPU Environment                ³
+³ fldl2e  [D9_EA]                     Load log2(e) into st(0)             ³
+³ fldl2t  [D9_E9]                     Load log2(10) into st(0)            ³
+³ fldlg2  [D9_EC]                     Load log10(2) into st(0)            ³
+³ fldln2  [D9_ED]                     Load loge(2) into st(0)             ³
+³ fldpi   [D9_EB]                     Load pi into st(0)                  ³
+³ fldz    [D9_EE]                     Load +0.0 into st(0)                ³
+³ fmul    [(D8,DC)/1;(D8,DC)_C8+i]    Multiply                            ³
+³ fmulp   [DE_C8+i]                   Multiply and Pop                    ³
+³ fnop    [D9_D0]                     No Operation                        ³
+³ fpatan  [D9_F3]                     Partial Arctangent                  ³
+³ fprem   [D9_F8]                     Partial Remainder                   ³
+³ fptan   [D9_F2]                     Partial Tangent                     ³
+³ frndint [D9_FC]                     Round to Integer                    ³
+³ frstor  [DD/4]                      Restore FPU state                   ³
+³ fsave   [DD/6]                      Save FPU state                      ³
+³ fscale  [D9_FD]                     Scale                               ³
+³ fsqrt   [D9_FA]                     Square Root                         ³
+³ fst     [(D9,DD)/2;DD_D0+i]         Store Real                          ³
+³ fstcw   [D9/7]                      Store Control Word                  ³
+³ fstenv  [D9/6]                      Store FPU Environment               ³
+³ fstp    [(D9,DD)/3;DD_D8+i]         Store Real and Pop                  ³
+³ fstsw   [DD/7;DF_E0]                Store Status Word                   ³
+³ fsub    [(D8,DC)/4;D8_E0+i;DC_E8+i] Substract                           ³
+³ fsubp   [DE_E8+i]                   Substract and Pop                   ³
+³ fsubr   [(D8,DC)/5;D8_E8+i,DC_E0+i] Reverse Substract                   ³
+³ fsubrp  [DE_E0+i]                   Reverse Substract and Pop           ³
+³ ftst    [D9_E4]                     Test                                ³
+³ fwait   [9B]                        Wait until FPU Ready                ³
+³ fxam    [D9_E5]                     Examine                             ³
+³ fxch    [D9_C8+i]                   Exchange st(0) and st(i)            ³
+³ fxtract [D9_F4]                     Extract Exponent and Significand    ³
+³ fyl2x   [D9_F1]                     Compute st(1)*log2(st(0))           ³
+³ fyl2xp1 [D9_F9]                     Compute st(1)*log2((st(0)+1.0)      ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³                     %B80186 instruction mnemonics%b                         ³
+³ %IThis processor is equivalent of%i %B80286%b %Iexcept protected-mode support%i     ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ bound [62]                          Check Array Against Bounds          ³
+³ enter [C8]                          Make Stackframe for HighLevel Routin³
+³ imul  [69,6B]                       SI byte or word Multiply            ³
+³ insb  [6C]                          Input Byte String from DX Port      ³
+³ insw  [6D]                          Input Word String from DX Port      ³
+³ leave [C9]                          HighLevel Procedure Exit            ³
+³ outsb [6E]                          Output Byte String to DX Port       ³
+³ outsw [6F]                          Output Word String to DX Port       ³
+³ popa  [61]                          Pop All General Registers           ³
+³ push  [68,6A]                       Push Constant onto the Stack        ³
+³ pusha [60]                          Push All General Registers          ³
+³ rcl   [(C0,C1)/2]                   Rotate thru Carry Left              ³
+³ rcr   [(C0,C1)/3]                   Rotate thru Carry Right             ³
+³ rol   [(C0,C1)/0]                   Rotate Left                         ³
+³ ror   [(C0,C1)/1]                   Rotate Right                        ³
+³ sar   [(C0,C1)/7]                   Shift Arithmetic Right              ³
+³ shl   [(C0,C1)/4]                   Shift Left                          ³
+³ shr   [(C0,C1)/5]                   Shift Right                         ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³                     %B80286 instruction mnemonics%b                         ³
+³ %IThis processor introduced the Protected Mode into the IA. This allow a%i  ³
+³ %Imaximum physical memory size of up to 16 MBytes, has support for virtual%i³
+³ %Imemory management on a segment swapping basis, and various protection%i   ³
+³ %Imechanisms.%i                                                             ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ arpl [63]                           Adjust RPL Field of Selector        ³
+³ clts [0F_06]                        Clear Task-Switched Flag in CR0     ³
+³ lar  [0F_02]                        Load Access Rights Byte             ³
+³ lgdt [0F_01/2]                      Load Global Register Table Register ³
+³ lidt [0F_01/3]                      Load Interrupt register Table Reg.  ³
+³ lldt [0F_00/2]                      Load Local Register Table Register  ³
+³ lmsw [0F_01/6]                      Load Machine Status Word            ³
+³ lsl  [0F_03]                        Load Segment Limit                  ³
+³ ltr  [0F_00/3]                      Load Task Register                  ³
+³ sgdt [0F_01/0]                      Store Global Descriptor Table Reg.  ³
+³ sidt [0F_01/1]                      Store Interrupt Descriptor Table Reg³
+³ sldt [0F_00/0]                      Store Local Descriptor Table Reg.   ³
+³ smsw [0F_01/4]                      Store Machine Status Word           ³
+³ str  [0F_00/1]                      Store Task Register                 ³
+³ verr [0F_00/4]                      Verify a Segment for Reading        ³
+³ verw [0F_00/5]                      Verify a Segment for Writing        ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ Undocumented :                                                          ³
+³ loadall286 [0F_05]                  Load all Protected Mode 286 Regs.   ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³                       %B80287 instruction mnemonics%b                       ³
+³ %IWith this coprocessor NPX, high-speed numeric computations were%i         ³
+³ %Iextended to%i %B80286%b %Ihigh-performance multitasking and multi-user systems.%i ³
+³ %IMultiple tasks using the numeric processor extension were afforded the%i  ³
+³ %Ifull protection of the%i %B80286%b %Imemory management and protection features.%i ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ fsetpm [DB_E4]                      Enter to Protected Mode             ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³                      %B80386 instruction mnemonics%b                        ³
+³ %IThis processor introduced 32-bit architecture. The 32-bit addressing was%i³
+³ %Isupported with an external 32-bit address bus, giving a 4-GByte address%i ³
+³ %Ispace, and also allowed each segment to be as large as 4 GBytes. Also it%i³
+³ %Iintroduced paging into the IA, with the fixed 4-KByte page size. This%i   ³
+³ %Iprocessor was the first IA processor to include a number of parallel%i    ³
+³ %Istages: 6. These are the Bus Interface Unit, the Code Prefetch Unit,%i    ³
+³ %Ithe Instruction Decode Unit, the Execution Unit, the Segment Unit%i       ³
+³ %Iand the Paging Unit%i                                                     ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ bsf    [0F_BC]                      Bit Scan Forward                    ³
+³ bsr    [0F_BD]                      Bit Scan Reverse                    ³
+³ bt     [0F_A3;0F_BA/4]              Bit Test                            ³
+³ btc    [0F_BB;0F_BA/7]              Bit Test and Complement             ³
+³ btr    [0F_B3;0F_BA/6]              Bit Test and Reset                  ³
+³ bts    [0F_AB;0F_BA/5]              Bit Test and Set                    ³
+³ cdq    [99]                         Convert S32 to S64                  ³
+³ cmpsd  [A7]                         Compare S32 Strings                 ³
+³ cwde   [98]                         Convert S16 to S32                  ³
+³ imul   [0F_AF/r]                    SI Multiply                         ³
+³ insd   [6D]                         Input S32 String from DX Port       ³
+³ iretd  [CF]                         Interrupt Return                    ³
+³ lfs    [0F_B4]                      Load Pointer to FS Register         ³
+³ lgs    [0F_B5]                      Load Pointer to GS Register         ³
+³ lodsd  [AD]                         Load S32 String Operand             ³
+³ lss    [0F_B2]                      Load Pointer to SS Register         ³
+³ mov    [0F_(20-27)]                 Move to/from Control Register       ³
+³ movsd  [A5]                         Move Data From/to S32 String        ³
+³ movsx  [0F_BE,0F_BF]                Move with Sign-Extend               ³
+³ movzx  [0F_B6,0F_B7]                Move with Zero-Extend               ³
+³ outsd  [6F]                         Output S32 String to DX Port        ³
+³ pop    [0F_(A1,A9)]                 Pop a Data from Stack               ³
+³ popad  [61]                         Pop all 32-bits General Registers   ³
+³ popfd  [9D]                         Pop Stack into EFlag Register       ³
+³ push   [0F_(A0,A8)]                 Push a data onto Stack              ³
+³ pushad [60]                         Push all 32-bits GEneral REgisters  ³
+³ pushfd [9C]                         Push EFlag Regsiter onto Stack      ³
+³ scasd  [AF]                         Scan S32 String                    ³
+³ seta   [0F_97]                      Set if Above (CF=0,ZF=0)            ³
+³ setae  [0F_93]                      Set if Above or Equal (CF=0)        ³
+³ setc   [0F_92]                      Set if Carry (CF=1)                 ³
+³ sete   [0F_94]                      Set if Equal (ZF=1)                 ³
+³ setg   [0F_9F]                      Set if Greater (ZF=0,SF=OF)         ³
+³ setl   [0F_9C]                      Set if Less (SF<>OF)                ³
+³ setle  [0F_9E]                      Set if Less or Equal (SF<>OF,ZF=1)  ³
+³ setna  [0F_96]                      Set if Not Above (CF=1,ZF=1)        ³
+³ setne  [0F_95]                      Set if Not Equal (ZF=0)             ³
+³ setnl  [0F_9D]                      Set if Not Less (SF=OF)             ³
+³ setno  [0F_91]                      Set if No Overflow (OF=0)           ³
+³ setnp  [0F_9B]                      Set if No Parity (PF=0)             ³
+³ setns  [0F_99]                      Set if No Sign (SF=0)               ³
+³ seto   [0F_90]                      Set if Overflow (OF=1)              ³
+³ setp   [0F_9A]                      Set if Parity (PF=1)                ³
+³ sets   [0F_98]                      Set if Sign (SF=1)                  ³
+³ shld   [0F_(A4,A5)]                 Double Precision Shift Left         ³
+³ shrd   [0F_(AC,AD)]                 Double Precision Shift Right        ³
+³ stosd  [AB]                         Store SI32 String Operands          ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³  Prefixes:    fs:  [64]           gs: [65]                              ³
+³        use32 data  [66]           use32 address [67]                    ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ Undocumented :                                                          ³
+³ loadall386 [0F_07]                  Load all Protected Mode 386 Regs.   ³
+³ icebp      [F1]                     Ice BP Register on Interrupt 3      ³
+³ umov       [0F_(10-13)]             User Move                           ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³                       %B80387 instruction mnemonics%b                       ³
+³ %IThis math coprocessor is Intel's third generation numeric processor.%i    ³
+³ %IIt implement the final IEEE Standard 754, adding new trigonometric%i      ³
+³ %Iinstructions, and using a new design and CHMOS-III process to allow%i     ³
+³ %Ihigher clock rates and require fewer clocks per instruction. Together,%i  ³
+³ %Ithe Intel 387 math coprocessor with additional instructions and the%i     ³
+³ %Iimproved standard brought even more convenience and reliability to%i      ³
+³ %Inumeric programming and made this convenience and reliability available%i ³
+³ %Ito applications that need the high-speed and large memory capacity of%i   ³
+³ %Ithe 32-bit environment of the%i %B80386%b %Imicroprocessor.%i                     ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ fcos    [D9_FF]                     Cosine of st(0)                     ³
+³ ffreep  [DF_C0+i]                   Fast free FP-register and Pop       ³
+³ fprem1  [D9_F5]                     Partial Remainder (IEEE)            ³
+³ fsin    [D9_FE]                     Sine of st(0)                       ³
+³ fsincos [D9_FB]                     Sine and Cosine                     ³
+³ fucom   [DD_E0+i]                   Unordered Compare Real              ³
+³ fucomp  [DD_E8+i]                   Unordered Compare Real and Pop      ³
+³ fucompp [DA_E9]                     Unordered Compare Real and Pop Twice³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ Undocumented (i387SL Mobile):                                           ³
+³ fnstdw  [DF_E1]                     Nowait store device word register   ³
+³ fnstsg  [DF_E2]                     Nowait store signature word register³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³                      %B80486 instruction mnemonics%b                        ³
+³ %IThis processor added more parallel execution capability by (basically)%i  ³
+³ %Iexpanding the%i %B80386%b %Iprocessor's Instruction Decode and Execution Units%i  ³
+³ %Iinto 5 pipelined stages, where each stage (when needed) operates in%i     ³
+³ %Iparallel with the others on up to 5 instructions in different stages%i    ³
+³ %Iof execution. Each stage can do its work on one instruction in one clock%i³
+³ %Iand so the this processor can execute as rapidly as one instruction per%i ³
+³ %ICPU clock. An 8-KByte on-chip L1 cache was added to the this processor%i  ³
+³ %Ito greatly increase the percent of instructions that could execute at%i   ³
+³ %Ithe scalar rate of one per clock. This processor also for the first time%i³
+³ %Iintegrated the floating-point math Unit onto the same chip as the CPU.%i  ³
+³ %IThe Intel486 processor%i %BFPU%b %Iis an on-chip equivalent of the%i %BIntel 387 DX%b ³
+³ %Imath coprocessor conforming to both IEEE Standard 754 and the more%i      ³
+³ %Irecent, generalized IEEE Standard 854.%i                                  ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ bswap   [0F_C8+r]                   Byte Swap                           ³
+³ cmpxchg [0F_B0;0F_B1]               Compare and Exchange                ³
+³ invd    [0F_08]                     Invalidate Cache                    ³
+³ invlpg  [0F_01/7]                   Invalidate TLB Entry                ³
+³ wbinvd  [0F_09]                     Writeback and Invalidate Data Cache ³
+³ xadd    [0F_(C0,C1)]                Exchange and Add                    ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ On Intel Units :                                                        ³
+³ cpuid  [0F_A2]                      CPU Identification                  ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³                      %ICyrix486 instruction mnemonics%i                     ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ rsdc      [0F_79]                   Restore Segment Register and Descrip³
+³ rsldt     [0F_7B/0]                 Restore LDTR and Descriptor         ³
+³ rsts      [0F_7D/0]                 Restore TSR and Descriptor          ³
+³ smintold  [0F_7E]                   Software SMM Entry (old version)    ³
+³ svdc      [0F_78]                   Save Segment Register and Descriptor³
+³ svldt     [0F_7A/0]                 Save LDTR and Descriptor            ³
+³ svts      [0F_7C/0]                 Save TSR and Descriptor             ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³                     %ICyrix 487 instruction mnemonics%i                     ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ Undocumented :                                                          ³
+³ frichop     [DD_FC]                 Round to Integer chop method        ³
+³ frinear     [DF_FC]                 Round to Integer nearest method     ³
+³ frint2      [DB_FC]                 Round to Integer                    ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³                  %B80586 (Pentium) instruction mnemonics%b                  ³
+³ %IThis processor added a second execution pipeline to achieve superscalar%i ³
+³ %Iperformance (2 pipelines, known as%i %Bu%b %Iand%i %Bv%b%I, together can execute two%i    ³
+³ %Iinstructions per clock). The on-chip L1 cache has also been doubled with%i³
+³ %I8 KBytes devoted to code, and another 8 KBytes devoted to data. Branch%i  ³
+³ %Iprediction with an on-chip branch table has been added to increase%i      ³
+³ %Iperformance in looping constructs. Extensions have been added to make%i   ³
+³ %Ithe virtual-8086 mode more efficient, and to allow for 4-MByte as well%i  ³
+³ %Ias 4KByte pages. Internal data paths of 128 and 256 bits have been added%i³
+³ %Ito speed internal data transfers, and the burstable external data bus%i   ³
+³ %Ihas been increased to 64 bits. The APIC has been added to support%i       ³
+³ %Isystems with multiple processors, and new pins and a special mode (dual%i ³
+³ %Iprocessing) has been designed in to support glueless two processor%i      ³
+³ %Isystems.%i                                                                ³
+³ %IThe Pentium R processor%i %BFPU%b %Ihas been completely redesigned over the%i     ³
+³ %IIntel486T processor FPU while maintaining conformance to both the IEEE%i  ³
+³ %IStandard 754 and 854. Faster algorithms provide at least three times the%i³
+³ %Iperformance over the Intel486T processor FPU for common operations%i      ³
+³ %Iincluding ADD, MUL, and LOAD. Many applications can achieve five times%i  ³
+³ %Ithe performance of the Intel486T processor FPU or more with instruction%i ³
+³ %Ischeduling and pipelined execution.%i                                     ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ cmpxchg8b [0F_C7]                   Compare and Exchange 8 Bytes        ³
+³ rsm       [0F_AA]                   Resume From System Management Mode  ³
+³ rdmsr     [0F_32]                   Read from Model-Specific Register   ³
+³ rdtsc     [0F_31]                   Read Time-Stamp Counter             ³
+³ wrmsr     [0F_30]                   Write to Model-Specific Register    ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ Unavailable:                        umov  [0F_(10-13)]                  ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³                 %BP5MMX (Pentium I) instruction mnemonics%b                 ³
+³ %IThis processor has improved execution pipelines which can execute%i       ³
+³ %Iinstruction with prefixes on either U or V pipelines, since non-MMX%i     ³
+³ %IPentium can execute an instruction with prefixes on U pipe only. This%i   ³
+³ %Iprocessor introduced MMX unit. The Intel%i %BMMX%b %Itechnology comprises a set%i ³
+³ %Iof extensions to the Intel Architecture that are designed to greatly%i    ³
+³ %Ienhance the performance of advanced media and communication applications%i³
+³ %Isuch as motion video, combined graphics with video, image processing,%i   ³
+³ %Iaudio synthesis, speech synthesis and compression, telephony, video%i     ³
+³ %Iconferencing, and 2D and 3D graphics, which typically use compute-%i      ³
+³ %Iintensive algorithms to perform repetitive operations on large arrays of%i³
+³ %Isimple, native data elements.%i                                           ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ emms      [0F_77]                   Empty MMX(tm) State                 ³
+³ movd      [0F_6E;0F_7E]             Move U32                            ³
+³ movq      [0F_6F;0F_7F]             Move U64                            ³
+³ packssdw  [0F_6B]                   Pack S32 to S16 (with saturation)   ³
+³ packsswb  [0F_63]                   Pack S16 to S8 (with saturation)    ³
+³ packuswb  [0F_67]                   Pack U16 to U8 (with saturation)    ³
+³ paddb     [0F_FC]                   Packed Add U8 with wrap-around      ³
+³ paddd     [0F_FE]                   Packed Add U32 with wrap-around     ³
+³ paddsb    [0F_EC]                   Packed Add S8 with saturation       ³
+³ paddsw    [0F_ED]                   Packed Add S16 with saturation      ³
+³ paddusb   [0F_DC]                   Packed Add U8 with saturation       ³
+³ paddusw   [0F_DD]                   Packed Add U16 with saturation      ³
+³ paddw     [0F_FD]                   Packed Add U16 with wrap-around     ³
+³ pand      [0F_DB]                   Bitwise AND                         ³
+³ pandn     [0F_DF]                   Bitwise AndNot                      ³
+³ pcmpeqb   [0F_74]                   Packed Compare U8 for equality      ³
+³ pcmpeqd   [0F_76]                   Packed Compare U32 for equality     ³
+³ pcmpeqw   [0F_75]                   Packed Compare U16 for equality     ³
+³ pcmpgtb   [0F_64]                   Packed Compare Greater S8           ³
+³ pcmtgtd   [0F_66]                   Packed Compare Greater S32          ³
+³ pcmtgtw   [0F_65]                   Packed Compare Greater S16          ³
+³ pmaddwd   [0F_F5]                   Packed Multiply S16 and Add S32     ³
+³ pmulhw    [0F_E5]                   Packed Multiplication high S16      ³
+³ pmullw    [0F_D5]                   Packed Multiplication low U16       ³
+³ por       [0F_EB]                   Bitwise OR                          ³
+³ pslld     [0F_F2;0F_72/6]           Packed Shift Left U32 Logical       ³
+³ psllq     [0F_F3;0F_73/6]           Packed Shift Left U64 Logical       ³
+³ psllw     [0F_F1;0F_71/6]           Packed Shift Left U16 Logical       ³
+³ psrad     [0F_E2;0F_72/4]           Packed Shift Right S32 Arithmetic   ³
+³ psraw     [0F_E1;0F_71/4]           Packed Shift Right S16 Arithmetic   ³
+³ psrld     [0F_D2;0F_72/2]           Packed Shift Right U32 Logical      ³
+³ psrlq     [0F_D3;0F_73/2]           Packed Shift Right U64 Logical      ³
+³ psrlw     [0F_D1;0F_71/2]           Packed Shift Right U16 Logical      ³
+³ psubb     [0F_F8]                   Packed Substract U8 with wrap-around³
+³ psubd     [0F_FA]                   Packed Substract U32 with wrap-aroun³
+³ psubsb    [0F_E8]                   Packed Substract S8 with saturation ³
+³ psubsw    [0F_E9]                   Packed Substract S16 with saturation³
+³ psubusb   [0F_D8]                   Packed Substract U8 with saturation ³
+³ psubusw   [0F_D9]                   Packed Substract U16 with saturation³
+³ psubw     [0F_F9]                   Packed Substract U16 with wrap-aroun³
+³ punpckhbw [0F_68]                   Unpack high U8 to U16               ³
+³ punpckhdq [0F_6A]                   Unpack high U32 to U64              ³
+³ punpckhwd [0F_69]                   Unpack high U16 to U32              ³
+³ punpcklbw [0F_60]                   Unpack low U8 to U16                ³
+³ punpcklqd [0F_62]                   Unpack low U32 to U64               ³
+³ punpcklwd [0F_61]                   Unpack low U16 to U32               ³
+³ pxor      [0F_EF]                   Bitwise XOR                         ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³                 %B80686 (Pentium Pro) instruction mnemonics%b               ³
+³ %IThis processor introduced "Dynamic Execution." It has a three-way super-%i³
+³ %Iscalar architecture, which means that it can execute three instructions%i ³
+³ %Iper CPU clock. It does this by incorporating even more parallelism than%i ³
+³ %Ithe Pentium processor. This processor provides Dynamic Execution (micro-%i³
+³ %Idata flow analysis, out-of-order execution, superior branch prediction,%i ³
+³ %Iand speculative execution) in a superscalar implementation. Three%i       ³
+³ %Iinstruction decode units work in parallel to decode object code into%i    ³
+³ %Ismaller operations called "micro-ops." These go into an instruction pool%i³
+³ %Iand (when interdependencies don't prevent) can be executed out of order%i ³
+³ %Iby the five parallel execution units (two integer, two FPU and one%i      ³
+³ %Imemory interface unit). It has two on-chip 8-KByte L1 caches and also%i   ³
+³ %Ihas a 256-KByte L2 cache. This processor also has an expanded 36-bit%i    ³
+³ %Iaddress bus, giving a maximum physical address space of 64 GBytes.%i      ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ cmova    [0F_47]                    Cond. Move if Above                 ³
+³ cmovae   [0F_43]                    Cond. Move if Above or Equal        ³
+³ cmovc    [0F_42]                    Cond. Move if Carry                 ³
+³ cmove    [0F_44]                    Cond. Move if Equal                 ³
+³ cmovg    [0F_4F]                    Cond. Move if Greater               ³
+³ cmovl    [0F_4C]                    Cond. Move if Less                  ³
+³ cmovle   [0F_4E]                    Cond. Move if Less or Equal         ³
+³ cmovna   [0F_46]                    Cond. Move if Not Above             ³
+³ cmovne   [0F_45]                    Cond. Move if Not Equal             ³
+³ cmovnl   [0F_4D]                    Cond. Move if Not Less              ³
+³ cmovno   [0F_41]                    Cond. Move if No Overflow           ³
+³ cmovnp   [0F_4B]                    Cond. Move if No Parity             ³
+³ cmovns   [0F_49]                    Cond. Move if No Sign               ³
+³ cmovo    [0F_40]                    Cond. Move if Overflow              ³
+³ cmovp    [0F_4A]                    Cond. Move if Parity                ³
+³ cmovs    [0F_48]                    Cond. Move if Sign                  ³
+³ fcomi    [DB_F0+i]                  Compare Real and Set EFlag          ³
+³ fcomip   [DF_F0+i]                  Compare Real, Set EFlag and Pop     ³
+³ fcmove   [DA_C8+i]                  Cond. Move if Equal                 ³
+³ fcmovg   [DB_D0+i]                  Cond. Move if Greater               ³
+³ fcmovge  [DB_C0+i]                  Cond. Move if Graete or Equal       ³
+³ fcmovl   [DA_C0+i]                  Cond. Move if Less                  ³
+³ fcmovle  [DA_D0+i]                  Cond. Move if Less or Equal         ³
+³ fcmovne  [DB_C8+i]                  Cond. Move if Not Equal             ³
+³ fcmovnu  [DB_D8+i]                  Cond. Move if Not Unordered         ³
+³ fcmovu   [DA_D8+i]                  Cond. Move if Unordered             ³
+³ fucomi   [DB_E8+i]                  Unordered Compare Real and Set EFlag³
+³ fucomip  [DF_E8+i]                  Unordered Compare Real, Set EFlg&Pop³
+³ rdpmc    [0F_33]                    Read Performance Monitoring Counter ³
+³ ud       [0F_0B]                    Undefined instruction               ³
+³ ud2      [0F_B9]                    Undefined instruction #2            ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ icebp  officially named as          int01                               ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³                        %BK6 instruction mnemonics%b                         ³
+³ %IThe AMD-K6 processor is socket 7-compatible and software-compatible with%i³
+³ %Ithe%i %BPentium-MMX%b %Iprocessor. Compatible in this sense means the devices%i   ³
+³ %Iare pin-for-pin compatible and that the same software can be executed on%i³
+³ %Iboth processors with no software modifications.%i                         ³
+³ %IThe AMD-K6 processor implements advanced design techniques known as the%i ³
+³ %IRISC86 microarchitecture. The internal L1 cache of the AMD-K6 MMX%i       ³
+³ %Ienhanced processor consists of two separate caches a 32-Kbyte%i           ³
+³ %Iinstruction cache and a 32-Kbyte data cache.%i                            ³
+³ %IThe processor contains 7 execution pipelines: store, load, integer X,%i   ³
+³ %Iinteger Y, multimedia, floating-point, and branch condition.%i            ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ syscall    [0F_05]                  Call Operating System               ³
+³ sysret     [0F_07]                  Return from Operating System        ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³                %BP6MMX (Pentium II) instruction mnemonics%b                 ³
+³ %IThis processor added MMX instructions to the%i %BPentium Pro%b %Iprocessor%i      ³
+³ %Iarchitecture, expanded the L1 data cache and L1 instruction cache to 16%i ³
+³ %IKBytes each and has L2 cache sizes up to 2 MByte. This processors%i       ³
+³ %Iutilize multiple low-power states such as AutoHALT, Stop-Grant, Sleep,%i  ³
+³ %Iand Deep Sleep to conserve power during idle times.%i                     ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ sysenter    [0F_34]                 Fast Transition To System Call Entry³
+³ sysexit     [0F_35]                 Fast Transition From Sys. Call Entry³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³                      %ICyrix686 instruction mnemonics%i                     ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ rdshr     [0F_36]                   Read SMM Header Pointer Register    ³
+³ smint     [0F_38]                   Software SMM Entry                  ³
+³ wrshr     [0F_37]                   Write SMM Header Pointer Register   ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³     %BK6-2, K6-2+, K6-III(Sharptooth) 3D Now! instruction mnemonics%b       ³
+³ %IThese processors are fully backward compatible with%i %BK6%b%I. In addition the%i ³
+³ %Iprocessors include the implementation of the%i %B3DNow!%b %Iinstruction set. The%i³
+³ %I3DNow! units provide support for high-performance, floating-point vector%i³
+³ %Ioperations, which can replace x87 instructions and enhance the%i          ³
+³ %Iperformance of 3D graphics and other floating-point-intensive%i           ³
+³ %Iapplications. 3DNow! technology also includes new integer multimedia%i    ³
+³ %Iinstructions, a new instruction to allow the prefetching of data under%i  ³
+³ %Isoftware control, and a faster enter/exit multimedia-state instruction.%i ³
+³ %IThe processor contains 10 execution pipelines: store, load, integer X%i   ³
+³ %IALU, integer Y ALU, MMX ALU (X), MMX ALU (Y), MMX/3DNow! multiplier,%i    ³
+³ %I3DNow! ALU, Floating-Point, and Branch.%i                                 ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ 3DNow! ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ femms     [0F_0E]             Faster Enter/Exit of MMX or FP state      ³
+³ pavgusb   [0F_0F/rm/BF]       Average of packed U8                      ³
+³ pf2id     [0F_0F/rm/1D]       Convert Packed F32 to Packed S32          ³
+³ pfacc     [0F_0F/rm/AE]       Packed Accumulate F32                     ³
+³ pfadd     [0F_0F/rm/9E]       Packed Add F32                            ³
+³ pfcmpeq   [0F_0F/rm/B0]       Packed F32 Comparision, equal to          ³
+³ pfcmpge   [0F_0F/rm/90]       Packed F32 Comparision, great or equal    ³
+³ pfcmpgt   [0F_0F/rm/A0]       Packed F32 Comparision, greater than      ³
+³ pfmax     [0F_0F/rm/A4]       Packed F32 maximum                        ³
+³ pfmin     [0F_0F/rm/94]       Packed F32 minimum                        ³
+³ pfmul     [0F_0F/rm/B4]       Packed F32 Multiplication                 ³
+³ pfrcp     [0F_0F/rm/96]       F32 Reciprocal Approximation              ³
+³ pfrcpit1  [0F_0F/rm/A6]       F32 Reciprocal Approx., 1 iter. step      ³
+³ pfrcpit2  [0F_0F/rm/B6]       F32 Recip./Recip Square Root, 2 iter.     ³
+³ pfrsqit1  [0F_0F/rm/A7]       Packed F32 Recip. Square Root 1 iter.     ³
+³ pfrsqrt   [0F_0F/rm/97]       F32 Recip. Square Root Approximation      ³
+³ pfsub     [0F_0F/rm/9A]       Packed F32 Substraction                   ³
+³ pfsubr    [0F_0F/rm/AA]       Packed F32 Reverse Substraction           ³
+³ pi2fd     [0F_0F/rm/0D]       Packed S32 to F32 conversion              ³
+³ pmulhrw   [0F_0F/rm/B7]       Multiply packed S16 with round            ³
+³ prefetch  [0F_0D/0]           Prefetch CacheLine into L1 DCache for read³
+³ prefetchw [0F_0D/1]           Prefetch CacheLine into L1 DCache for writ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ Many chips undocumentedly support all five instructions from K7 set     ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³                   %BK7 (Athlon) instruction mnemonics%b                     ³
+³ %IThe AMD-Athlon processor - the first K86 processor which is %Belectrically%b%i³
+³ %Bincompatible%b %Iwith the%i %BIntel%b %Iprocessors and requires specially designed%i  ³
+³ %Ihardware environment which can work at 200MHz. The AMD Athlon processor%i ³
+³ %Iis an aggressive, out-of-order, three-way superscalar x86 processor. It%i ³
+³ %Ican fetch, decode, and issue up to three x86 instructions per cycle with%i³
+³ %Ia centralized instruction control unit (ICU) and two independent%i        ³
+³ %Iinstruction schedulers an integer scheduler and a floating-point%i        ³
+³ %Ischeduler. These two schedulers can simultaneously issue up to nine OPs%i ³
+³ %Ito the three general-purpose integer execution units (IEUs), three%i      ³
+³ %Iaddress-generation units (AGUs), and three floating-point/3DNow! /MMX%i   ³
+³ %Iexecution units. Also the AMD Athlon processor can extract code%i         ³
+³ %Iparallelism on-the-fly from off-the-shelf, commercially available x86%i   ³
+³ %Isoftware.%i                                                               ³
+³ %IK7 processor is fully backward compatible with%i %BK6-III%b %IIts instruction%i   ³
+³ %Iset also includes%i %BMMX2%b %Iinstruction set of%i %BPIII%b%I:%i                         ³
+³ maskmovq, movntq, pavgb, pavgw, pextrw, pinsrw, pmaxsw, pmaxub, pminsw  ³
+³ pminub, pmovmskb, pmulhuw, prefetchnta, prefetcht0, prefetcht1,         ³
+³ prefetcht2, psadbw, pshufw, sfence.                                     ³
+³ %IAlso AMD Athlon processor contains APIC, MTRRs, Global Paging Extension,%i³
+³ %IMachine Check Architecture, Conditional Move Instructions, and Page%i     ³
+³ %IAttribute Table and implements%i %B3DNow! DSP Extensions%b%I:%i                   ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ 3DNowA! ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ pf2iw      [0F_0F/rm/1C]      Packed F32 to S16 conv. with sign ext.    ³
+³ pfnacc     [0F_07/rm/8A]      Packed F32 negative accumulate            ³
+³ pfpnacc    [0F_0F/rm/8E]      Packed F32 mix. posit./negat. accumulate  ³
+³ pi2fw      [0F_0F/rm/0C]      Packed S16 to F32 conversation            ³
+³ pswapd     [0F_0F/rm/BB]      Packed swap S32                           ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ All cpus (except model 1) support fxsave / fxrestore instructions       ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³                    %BPentium III instruction mnemonics%b                    ³
+³ %IThis processor is based on the%i %BPentium Pro%b %Iand%i %BPentium II%b %Iprocessors%i   ³
+³ %Iarchitectures and introduces SSE extensions of the IA instruction set%i   ³
+³ %Iand add a new set of 128-bit registers. These instructions target%i       ³
+³ %Iexisting functional units within the architecture as well as the new%i    ³
+³ %ISIMD-floating-point unit (Single-Instruction, Multiple-Data).%i           ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ MMX2 ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ maskmovq    [0F_F7/3]               Byte mask write                     ³
+³ movntq      [0F_E7]                 Move 64-bits Non Temporal           ³
+³ pavgb       [0F_E0]                 Packed Average U8                   ³
+³ pavgw       [0F_E3]                 Packed Average U16                  ³
+³ pextrw      [0F_C5:3]               Extract U16                         ³
+³ pinsrw      [0F_C4]                 Insert U16                          ³
+³ pmaxsw      [0F_EE]                 Packed S16 maximum                  ³
+³ pmaxub      [0F_DE]                 Packed U8 maximum                   ³
+³ pminsw      [0F_EA]                 Packed S16 minimum                  ³
+³ pminub      [0F_DA]                 Packed U8 minimum                   ³
+³ pmovmskb    [0F_D7:3]               Move Byte Mask to Integer           ³
+³ pmulhuw     [0F_E4]                 Packed Multiply High U16            ³
+³ prefetchnta [0F_18/0]               Prefetch to L1 cache                ³
+³ prefetcht0  [0F_18/1]               Prefetch to all cache levels        ³
+³ prefetcht1  [0F_18/2]               Prefetch to all cache levels        ³
+³ prefetcht2  [0F_18/3]               Prefetch to L2 cache                ³
+³ psadbw      [0F_F6]                 Packed Sum of Absolute U16 Differenc³
+³ pshufw      [0F_70]                 Packed Shuffle U16                  ³
+³ sfence      [0F_AE/7]               Store Fence                         ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ SSE ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ addps       [0F_58]                 Packed F32 Add                      ³
+³ addss       [F3_0F_58]              Scalar F32 Add                      ³
+³ andps       [0F_54]                 Bitwise Logical And for F32         ³
+³ andnps      [0F_55]                 Bitwise Logical AndNot for F32      ³
+³ cmpeqps     [0F_C2/rm/00]           Packet F32 Compare (Equal)          ³
+³ cmpleps     [0F_C2/rm/02]           Packet F32 Compare (Less|Equal)     ³
+³ cmpltps     [0F_C2/rm/01]           Packet F32 Compare (LessThan)       ³
+³ cmpneqps    [0F_C2/rm/04]           Packet F32 Compare (!Equal)         ³
+³ cmpnleps    [0F_C2/rm/06]           Packet F32 Compare (!(Less|Equal))  ³
+³ cmpnltps    [0F_C2/rm/05]           Packet F32 Compare (!LessThan)      ³
+³ cmpordps    [0F_C2/rm/07]           Packet F32 Compare (Ordered)        ³
+³ cmpps       [0F_C2/rm/XX]           Packet F32 Compare                  ³
+³ cmpunordps  [0F_C2/rm/03]           Packet F32 Compare (UnOrdered)      ³
+³ cmpeqss     [F3_0F_C2/rm/00]        Scalar F32 Compare (Equal)          ³
+³ cmpless     [F3_0F_C2/rm/02]        Scalar F32 Compare (Less|Equal)     ³
+³ cmpltss     [F3_0F_C2/rm/01]        Scalar F32 Compare (LessThan)       ³
+³ cmpneqss    [F3_0F_C2/rm/04]        Scalar F32 Compare (!Equal)         ³
+³ cmpnless    [F3_0F_C2/rm/06]        Scalar F32 Compare (!(Less|Equal))  ³
+³ cmpnltss    [F3_0F_C2/rm/05]        Scalar F32 Compare (!LessThan)      ³
+³ cmpordss    [F3_0F_C2/rm/07]        Scalar F32 Compare (Ordered)        ³
+³ cmpss       [F3_0F_C2/rm/XX]        Scalar F32 Compare                  ³
+³ cmpunordss  [F3_0F_C2/rm/03]        Scalar F32 Compare (UnOrdered)      ³
+³ comiss      [0F_2F]                 Scalar Ordered F32 Compare          ³
+³ cvtpi2ps    [0F_2A]                 Packed S32 to F32 cvt               ³
+³ cvtps2pi    [0F_2D]                 Packed F32 to packed S32 cvt        ³
+³ cvtsi2ss    [F3_0F_2A]              Scalar S32 to F32 cvt               ³
+³ cvtss2si    [F3_0F_2D]              Scalar F32 to S32 cvt               ³
+³ cvttps2pi   [0F_2C]                 Packed F32 to packed S32 with trunc ³
+³ cvttss2si   [F3_0F_2C]              Scalar F32 to S32 with trunc        ³
+³ divps       [0F_5E]                 Packed F32 Divide                   ³
+³ divss       [F3_0F_5E]              Scalar F32 Divide                   ³
+³ fxrstor     [0F_AE/1]               Restore FP/MMX and SSE state        ³
+³ fxsave      [0F_AE/0]               Save FP/MMX and SSE state           ³
+³ ldmxcsr     [0F_AE/2]               Load SSE control/status register    ³
+³ maxps       [0F_5F]                 Packed F32 maximum                  ³
+³ maxss       [F3_0F_5F]              Scalar F32 maximum                  ³
+³ minps       [0F_5D]                 Packed F32 minimum                  ³
+³ minss       [F3_0F_5D]              Scalar F32 minimum                  ³
+³ movaps      [0F_28;0F_29]           Move Aligned Packed F32             ³
+³ movhlps     [0F_12:3]               Move High to Low Packed F32         ³
+³ movhps      [0F_16;0F_17]           Move High Packed F32                ³
+³ movlhps     [0F_16:3]               Move low to High Packed F32         ³
+³ movlps      [0F_12;0F_13]           Move Low Packed F32                 ³
+³ movmskps    [0F_50:3]               Move Mask to Integer                ³
+³ movntps     [0F_2B]                 Mov Align. Packed F32 non Temporal  ³
+³ movss       [F3_0F_10;F3_0F_11]     Move Scalar F32                     ³
+³ movups      [0F_10;0F_11]           Move Unaligned Packed F32           ³
+³ mulps       [0F_59]                 Packed F32 Multiply                 ³
+³ mulss       [F3_0F_59]              Scalar F32 Multiply                 ³
+³ orps        [0F_56]                 Bitwise Logical OR for F32          ³
+³ rcpps       [0F_53]                 Packed F32 Reciprocal               ³
+³ rcpss       [F3_0F_53]              Scalar F32 Reciprocal               ³
+³ rsqrtps     [0F_52]                 Packed F32 Square Root Recip.       ³
+³ rsqrtss     [F3_0F_52]              Scalar F32 Square Root Recip.       ³
+³ shufps      [0F_C6]                 Shuffle F32                         ³
+³ sqrtps      [0F_51]                 Packed F32 Square Root              ³
+³ sqrtss      [F3_0F_51]              Scalar F32 Square Root              ³
+³ stmxcsr     [0F_AE/3]               Store SSE control/status register   ³
+³ subps       [0F_5C]                 Packed F32 Substract                ³
+³ subss       [F3_0F_5C]              Scalar F32 Substract                ³
+³ ucomiss     [0F_2E]                 Unordered F32 compare               ³
+³ unpckhps    [0F_15]                 Unpack High Packed F32 Data         ³
+³ unpcklps    [0F_14]                 Unpack Low Packed F32 Data          ³
+³ xorps       [0F_57]                 Bitwise Logical XOR for F32         ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³                     %BPentium 4 instruction mnemonics%b                     ³
+³ %IThis processor is the first based on the%i %BIntel NetBurst%b %Imicro-%i          ³
+³ %Iarchitecture, which is allows processors to operate at significantly%i    ³
+³ %Ihigher clock speeds (400 MHz of system bus and 1.5GHz of core) and%i      ³
+³ %Iperformance levels than previous IA-32 processors. Also this processor%i  ³
+³ %Iintroduces SSE2 extensions of the IA instruction set and add double%i     ³
+³ %Iprecision floating point operations. In addition, it has Rapid Execution%i³
+³ %IEngine, Hyper Pipelined Technology, Advanced Dynamic Execution,%i         ³
+³ %IInnovative new cache subsystem.%i                                         ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ SSE2 ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ addpd       [66_0F_58]              Packed F64 Add                      ³
+³ addsd       [F2_0F_58]              Scalar F64 Add                      ³
+³ andpd       [66_0F_54]              Bitwise Logical And for F64         ³
+³ andnpd      [66_0F_55]              Bitwise Logical AndNot for F64      ³
+³ cmpeqpd     [66_0F_C2/rm/00]        Packet F64 Compare (Equal)          ³
+³ cmplepd     [66_0F_C2/rm/02]        Packet F64 Compare (Less|Equal)     ³
+³ cmpltpd     [66_0F_C2/rm/01]        Packet F64 Compare (LessThan)       ³
+³ cmpneqpd    [66_0F_C2/rm/04]        Packet F64 Compare (!Equal)         ³
+³ cmpnlepd    [66_0F_C2/rm/06]        Packet F64 Compare (!(Less|Equal))  ³
+³ cmpnltpd    [66_0F_C2/rm/05]        Packet F64 Compare (!LessThan)      ³
+³ cmpordpd    [66_0F_C2/rm/07]        Packet F64 Compare (Ordered)        ³
+³ cmppd       [66_0F_C2/rm/XX]        Packet F64 Compare                  ³
+³ cmpunordpd  [66_0F_C2/rm/03]        Packet F64 Compare (UnOrdered)      ³
+³ cmpeqsd     [F2_0F_C2/rm/00]        Scalar F64 Compare (Equal)          ³
+³ cmplesd     [F2_0F_C2/rm/02]        Scalar F64 Compare (Less|Equal)     ³
+³ cmpltsd     [F2_0F_C2/rm/01]        Scalar F64 Compare (LessThan)       ³
+³ cmpneqsd    [F2_0F_C2/rm/04]        Scalar F64 Compare (!Equal)         ³
+³ cmpnlesd    [F2_0F_C2/rm/06]        Scalar F64 Compare (!(Less|Equal))  ³
+³ cmpnltsd    [F2_0F_C2/rm/05]        Scalar F64 Compare (!LessThan)      ³
+³ cmpordsd    [F2_0F_C2/rm/07]        Scalar F64 Compare (Ordered)        ³
+³ cmpsd       [F2_0F_C2/rm/XX]        Scalar F64 Compare                  ³
+³ cmpunordsd  [F2_0F_C2/rm/03]        Scalar F64 Compare (UnOrdered)      ³
+³ comisd      [66_0F_2F]              Scalar Ordered F64 Compare          ³
+³ cvtdq2pd    [F3_0F_E6]              Packed S64 to F64 cvt               ³
+³ cvtdq2ps    [0F_5B]                 Packed S64 to F32 cvt               ³
+³ cvtpd2dq    [F2_0F_E6]              Packed F64 to packed S64 cvt        ³
+³ cvtpd2pi    [66_0F_2D]              Packed F64 to packed S32 cvt        ³
+³ cvtpd2ps    [66_0F_5A]              Packed F64 to packed F32 cvt        ³
+³ cvtpi2pd    [66_0F_2A]              Packed S32 to F64 cvt               ³
+³ cvtps2dq    [66_0F_5B]              Packed F32 to packed S64 cvt        ³
+³ cvtps2pd    [0F_5A]                 Packed F32 to packed F64 cvt        ³
+³ cvtsd2si    [F2_0F_2D]              Scalar F64 to S32 cvt&trunc         ³
+³ cvtsd2ss    [F2_0F_5A]              Scalar F64 to F32 cvt               ³
+³ cvtsi2sd    [F2_0F_2A]              Scalar S32 to scalar F64 cvt        ³
+³ cvtss2sd    [F3_0F_5A]              Scalar F32 to scalar F64 cvt        ³
+³ cvttpd2pi   [66_0F_2C]              Packed F64 to S32 cvt&trunc mm      ³
+³ cvttpd2dq   [66_0F_E6]              Packed F64 to S64 cvt&trunc         ³
+³ cvttps2dq   [F3_0F_5B]              Packed F32 to S64 cvt&trunc         ³
+³ cvttsd2si   [F2_0F_2C]              Scalar F64 to S32 cvt&trunc         ³
+³ divpd       [66_0F_5E]              Packed F64 Divide                   ³
+³ divsd       [F2_0F_5E]              Scalar F64 Divide                   ³
+³ lfence      [0F_AE/5]               Load Fence                          ³
+³ maskmovdqu  [66_0F_F7]              Mask move of U128 unaligned         ³
+³ maxpd       [66_0F_5F]              Packed F64 maximum                  ³
+³ maxsd       [F2_0F_5F]              Scalar F64 maximum                  ³
+³ mfence      [0F_AE/6]               Memory Fence                        ³
+³ minpd       [66_0F_5D]              Packed F64 minimum                  ³
+³ minsd       [F2_0F_5D]              Scalar F64 minimum                  ³
+³ movapd      [66_0F_28;66_0F_29]     Move Aligned Packed F64             ³
+³ movd        [66_0F_6E;66_0F_7E]     Move U32 (xmmx)                     ³
+³ movdqa      [66_0F_6F;66_0F_7F]     Move Aligned U128                   ³
+³ movdqu      [F3_0F_6F;F3_0F_7F]     Move Unaligned U128                 ³
+³ movdq2q     [F2_0F_D6]              Move U64                            ³
+³ movhpd      [66_0F_16;66_0F_17]     Move High Packed F64                ³
+³ movlpd      [66_0F_12;66_0F_13]     Move Low Packed F64                 ³
+³ movmskpd    [66_0F_50:3]            Extract Sign Mask of Packed F64     ³
+³ movntdq     [66_0F_E7]              Move U128 Non Temporal              ³
+³ movnti      [0F_C3]                 Move U32 Non Temporal               ³
+³ movntpd     [66_0F_2B]              Move packed F64 Non Temporal        ³
+³ movq        [F3_0F_7E;66_0F_D6]     Move U64 (xmmx)                     ³
+³ movq2dq     [F3_0F_D6]              Move U64                            ³
+³ movsd       [F2_0F_10;F2_0F_11]     Move Scalar F64                     ³
+³ movupd      [66_0F_10;66_0F_11]     Move Unaligned Packed F64           ³
+³ mulpd       [66_0F_59]              Packed F64 Multiply                 ³
+³ mulsd       [F2_0F_59]              Scalar F64 Multiply                 ³
+³ orpd        [66_0F_56]              Bitwise Logical OR for F64          ³
+³ packssdw    [66_0F_6B]              Pack S32 to S16 (with saturation)   ³
+³ packsswb    [66_0F_63]              Pack S16 to S8 (with saturation)    ³
+³ packuswb    [66_0F_67]              Pack U16 to U8 (with saturation)    ³
+³ paddb       [66_0F_FC]              Add U8 with wrap-around  (xmmx)     ³
+³ paddd       [66_0F_FE]              Add U32 with wrap-around (xmmx)     ³
+³ paddq       [0F_D4;66_0F_D4]        Add Packed U64                      ³
+³ paddsb      [66_0F_EC]              Add S8 with saturation              ³
+³ paddsw      [66_0F_ED]              Add S16 with saturation             ³
+³ paddusb     [66_0F_DC]              Add U8 with saturation              ³
+³ paddusw     [66_0F_DD]              Add U16 with saturation             ³
+³ paddw       [66_0F_FD]              Add U16 with wrap-around  (xmmx)    ³
+³ pand        [66_0F_DB]              Bitwise AND  (xmmx)                 ³
+³ pandn       [66_0F_DF]              Bitwise AndNot (xmmx)               ³
+³ pause       [F3_90]                 Pause for present amount of time    ³
+³ pavgb       [66_0F_E0]              Packed Average U8 (xmmx)            ³
+³ pavgw       [66_0F_E3]              Packed Average U16 (xmmx)           ³
+³ pcmpeqb     [66_0F_74]              Packed Compare U8 for equality      ³
+³ pcmpeqd     [66_0F_76]              Packed Compare U32 for equality     ³
+³ pcmpeqw     [66_0F_75]              Packed Compare U16 for equality     ³
+³ pcmpgtb     [66_0F_64]              Packed Compare Greater S8           ³
+³ pcmtgtd     [66_0F_66]              Packed Compare Greater S32          ³
+³ pcmtgtw     [66_0F_65]              Packed Compare Greater S16          ³
+³ pextrw      [66_0F_C5:3]            Extract U16 (xmmx)                  ³
+³ pinsrw      [66_0F_C4]              Insert U16 (xmmx)                   ³
+³ pmaddwd     [66_0F_F5]              Packed Multiply U16 and Add U32(xmmx³
+³ pmaxsw      [66_0F_EE]              Packed S16 maximum                  ³
+³ pmaxub      [66_0F_DE]              Packed U8 maximum                   ³
+³ pminsw      [66_0F_EA]              Packed S16 minimum                  ³
+³ pminub      [66_0F_DA]              Packed U8 minimum                   ³
+³ pmovmskb    [66_0F_D7:3]            Packed move U8 Mask                 ³
+³ pmulhuw     [66_0F_E4]              Packed Multiply High U16            ³
+³ pmulhw      [66_0F_E5]              Packed Multiplication high S16      ³
+³ pmullw      [66_0F_D5]              Packed Multiplication low U16       ³
+³ pmuludq     [0F_F4;66_0F_F4]        Multiply U32                        ³
+³ por         [66_0F_EB]              Bitwise OR (xmmx)                   ³
+³ psadbw      [66_0F_F6]              Packed Sum of Absolute U16 Differenc³
+³ pshufd      [66_0F_70]              Packed Shuffle U32                  ³
+³ pshufhw     [F3_0F_70]              Packed Shuffle High U16             ³
+³ pshuflw     [F2_0F_70]              Packed Shuffle Low U16              ³
+³ pslldq      [66_0F_73/7]            Packed Shift left logical U128      ³
+³ pslld       [66_0F_F2;66_0F_72/6]   Packed Shift Left U32 Logical xmmx  ³
+³ psllq       [66_0F_F3;66_0F_73/6]   Packed Shift Left U64 Logical xmmx  ³
+³ psllw       [66_0F_F1;66_0F_71/6]   Packed Shift Left U16 Logical xmmx  ³
+³ psrad       [66_0F_E2;66_0F_72/4]   Packed Shift Right S32 Arithmetic   ³
+³ psraw       [66_0F_E1;66_0F_71/4]   Packed Shift Right S16 Arithmetic   ³
+³ psrldq      [66_0F_73/3]            Packed Shift Right logical U128     ³
+³ psrld       [66_0F_D2;66_0F_72/2]   Packed Shift Right U32 Logical      ³
+³ psrlq       [66_0F_D3;66_0F_73/2]   Packed Shift Right U64 Logical      ³
+³ psrlw       [66_0F_D1;66_0F_71/2]   Packed Shift Right U16 Logical      ³
+³ psubb       [66_0F_F8]              Substract U8 with wrap-around       ³
+³ psubd       [66_0F_FA]              Substract U32 with wrap-around      ³
+³ psubq       [66_0F_FB]              Packed substract U64                ³
+³ psubw       [66_0F_FA]              Substract U16 with wrap-around      ³
+³ psubsb      [66_0F_E8]              Substract S8 with saturation        ³
+³ psubsw      [66_0F_E9]              Substract S16 with saturation       ³
+³ psubusb     [66_0F_D8]              Substract U8 with saturation        ³
+³ psubusw     [66_0F_D9]              Substract U16 with saturation       ³
+³ punpckhbw   [66_0F_68]              Unpack high U8 to U16               ³
+³ punpckhdq   [66_0F_6A]              Unpack high U32 to U64              ³
+³ punpckhqdq  [66_0F_6D]              Interleave high U64 in xmmx         ³
+³ punpckhwd   [66_0F_69]              Unpack high U16 to U32              ³
+³ punpcklbw   [66_0F_60]              Unpack low U8 to U16                ³
+³ punpcklqd   [66_0F_62]              Unpack low U32 to U64               ³
+³ punpcklqdq  [66_0F_6C]              Interleave low U64 in xmmx          ³
+³ punpcklwd   [66_0F_61]              Unpack low U16 to U32               ³
+³ pxor        [66_0F_EF]              Bitwise XOR (xmmx)                  ³
+³ shufpd      [66_0F_C6]              Shuffle F64                         ³
+³ sqrtpd      [66_0F_51]              Packed F64 Square Root              ³
+³ sqrtsd      [F2_0F_51]              Scalar F64 Square Root              ³
+³ subpd       [66_0F_5C]              Packed F64 Substract                ³
+³ subsd       [F2_0F_5C]              Scalar F64 Substract                ³
+³ ucomisd     [66_0F_2E]              Unordered F64 compare               ³
+³ unpckhpd    [66_0F_15]              Unpack High Packed F64 Data         ³
+³ unpcklpd    [66_0F_14]              Unpack Low Packed F64 Data          ³
+³ xorpd       [66_0F_57]              Bitwise Logical XOR for F64         ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³                     %BPrescott instruction mnemonics%b                      ³
+³ %BPrescott%b%I is the name for a new (9th in biew terms) generation%i           ³
+³ %Iof IA32 processors which introduces new instructions (unofficially   %i   ³
+³ %Inamed as SSE3)%i                                                          ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ SSE3 ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ monitor     [0F_01_C8]              Setup monitor address               ³
+³ mwait       [0F_01_C9]              Monitor wait                        ³
+³ fistpp      [DB(DD,DF)/1]           Store Int and pop x87 with trunc    ³
+³ addsubpd    [66_0F_D0/rm]           Packet F64 Add/Substract            ³
+³ addsubps    [F2_0F_D0/rm]           Packet F32 Add/Substract            ³
+³ haddpd      [66_0F_7C/rm]           Packet F64 Horizontal Add           ³
+³ haddps      [F2_0F_7C/rm]           Packet F32 Horizontal Add           ³
+³ hsubpd      [66_0F_7D/rm]           Packet F64 Horizontal Substract     ³
+³ hsubps      [F2_0F_7D/rm]           Packet F32 Horizontal Substract     ³
+³ lddqu       [F2_0F_F0/rm]           Load unaligned U128                 ³
+³ movddup     [F2_0F_12/rm]           Move one F64 and duplicate          ³
+³ movshdup    [F3_0F_16/rm]           Move packet F32 High and dup        ³
+³ movsldup    [F3_0F_12/rm]           Move packet F32 Low and dup         ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³               %BAthlon64 (aka x86-64) instruction mnemonics%b               ³
+³ %IIntroduces 64-bit backward-compatible architecture which expands CPU    %i³
+³ %Ito access 64-bit address space and perform 64-bit operations.           %i³
+³ %IThis CPU supports all instructions which were introdused in %BPentium4%b and%i³
+³ %I%BAthlon-K7%b processors and introduces new features described below        %i³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ %IList of new instructions:                                               %i³
+³ movsxd     [63/rm]            Move with Sign-Extend S32                 ³
+³ swapgs     [OF_01_F8]         Swap GS with KernelGSBase MSR             ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ %IList of invalide instructions:                                          %i³
+³ aaa        [37]   das        [2F]    pop es     [07]  sahf       [9E]   ³
+³ aad        [D5]   inc/dec    [40-4F] pop ss     [17]  lahf       [9F]   ³
+³ aam        [D4]   into       [CE]    popa       [61]  salc       [D6]   ³
+³ aas        [3F]   jmp far    [EA]    push cs    [0E]  sysenter   [0F_34]³
+³ arpl       [63]   lahf       [9F]    push ds    [1E]  sysexit    [0F_35]³
+³ bound      [62]   lds        [C5]    push es    [06]                    ³
+³ call far   [9A]   les        [C4]    push ss    [16]                    ³
+³ daa        [27]   pop ds     [1F]    pusha      [60]                    ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³                     %BXeon5100 instruction mnemonics%b                      ³
+³ %BXeon5100%b%I is the name for a new (10th in biew terms) generation%i          ³
+³ %Iof IA32 processors which introduces new instructions (unofficially   %i   ³
+³ %Inamed as Supplemental SSE3 or SSSE3)%i                                    ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ SSSE3 ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ pabsb       [0F_38_1C/r]            Packet Absolute value for mmx S8    ³
+³ pabsb       [66_0F_38_1C/r]         Packet Absolute value for xmmx S8   ³
+³ pabsw       [0F_38_1D/r]            Packet Absolute value for mmx S16   ³
+³ pabsw       [66_0F_38_1D/r]         Packet Absolute value for xmmx S16  ³
+³ pabsd       [0F_38_1E/r]            Pack Absolute value for mmx S32     ³
+³ pabsd       [66_0F_38_1E/r]         Pack Absolute value for xmmx S32    ³
+³ palignr     [0F_3A_0F]              Packet Align Right mmx              ³
+³ palignr     [66_0F_3A_0F]           Packet Align Right xmmx             ³
+³ phaddw      [0F_38_01]              Packet Horizontal Add mmx S16       ³
+³ phaddw      [66_0F_38_01]           Packet Horizontal Add xmmx S16      ³
+³ phaddd      [0F_38_02]              Packet Horizontal Add mmx S32       ³
+³ phaddd      [66_0F_38_02]           Packet Horizontal Add xmmx S32      ³
+³ phaddsw     [0F_38_03]              Packet Horz Add and Saturate S16 mmx³
+³ phaddsw     [66_0F_38_03]           Packet Horz Add and Saturate S16 xmm³
+³ phsubw      [0F_38_05]              Packet Horizontal Sub mmx S16       ³
+³ phsubw      [66_0F_38_05]           Packet Horizontal Sub xmmx S16      ³
+³ phsubd      [0F_38_06]              Packet Horizontal Sub mmx S32       ³
+³ phsubd      [66_0F_38_06]           Packet Horizontal Sub xmmx S32      ³
+³ phsubsw     [0F_38_07]              Packet Horz Sub and Saturate mmx S16³
+³ phsubsw     [66_0F_38_07]           Packet Horz Sub and Saturate xmmxS16³
+³ pmaddubsw   [0F_38_04]              Multiply and Add Packet S16 mmx     ³
+³ pmaddubsw   [66_0F_38_04]           Multiply and Add Packet S16 xmmx    ³
+³ pmulhrsw    [0F_38_0B]              Mul High w Round and Scale S16 mmx  ³
+³ pmulhrsw    [66_0F_38_0B]           Mul High w Round and Scale S16 xmmx ³
+³ pshufb      [0F_38_00]              Packet Shuffle U8 mmx               ³
+³ pshufb      [66_0F_38_00]           Packet Shuffle U8 xmmx              ³
+³ psignb      [0F_38_08]              Negate Packet S8 mmx                ³
+³ psignb      [66_0F_38_08]           Negate Packet S8 xmmx               ³
+³ psignw      [0F_38_09]              Negate Packet S16 mmx               ³
+³ psignw      [66_0F_38_09]           Negate Packet S16 xmmx              ³
+³ psignd      [0F_38_0A]              Negate Packet S32 mmx               ³
+³ psignd      [66_0F_38_0A]           Negate Packet S32 xmmx              ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄSMXÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ getsec      [0F_37]                 Get SMX (Safer Mode eXtension) func ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄVMXÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ invept      [66_0F_38_80]           Invalid Translations Derivd from EPT³
+³ invvpid     [66_0F_38_81]           Invalid Translations Based on VPID  ³
+³ vmcall      [0F_01_C1]              Call to VM Monitor                  ³
+³ vmclear     [66_0F_01_C7/6]         Clear VM Control Structure          ³
+³ vmlaunch    [0F_01_C2]              Laungh VM Manager by current VMCS   ³
+³ vmptrld     [0F_C7/6]               Load Pointer to VM Control Structure³
+³ vmptrst     [0F_C7/7]               Store Ptr to VM Control Structure   ³
+³ vmread      [0F_78]                 Read Field from VMCS                ³
+³ vmresume    [0F_01_C3]              Resume VM Manager by current VMCS   ³
+³ vmwrite     [0F_79]                 Write Field to VMCS                 ³
+³ vmxoff      [0F_01_C4]              Leave VMX Operation                 ³
+³ vmxon       [F3_0F_C7/6]            Enter VMX Operation                 ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³                  %BVIA PadLock instruction mnemonics%b                      ³
+³ The VIA PadLock Security Engine comprises ground-breaking features      ³
+³ integrated into all recent VIA x86 processors. As part of the VIA       ³
+³ PadLock Security Initiative, the VIA PadLock Security Engine provides a ³
+³ platform approach to computer security, ensuring uncompromising security³
+³ performance working in concert with leading edge security software.     ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ xstore-rng  [0F_A7_C0]              Store Available Random Bytes        ³
+³ xcryptecb   [0F_A7_C8]              Electronic Code Book                ³
+³ xcryptcbc   [0F_A7_D0]              Cipher Block Chaining               ³
+³ xcryptctr   [0F_A7_D8]              Counter Mode                        ³
+³ xcryptcfb   [0F_A7_E0]              Cipher Feedback Mode                ³
+³ xcryptofb   [0F_A7_E8]              Output Feedback Mode                ³
+³ montmul     [0F_A6_C0]              Montgomery Multiplier               ³
+³ xsha1       [0F_A6_C8]              Hash Function SHA-1                 ³
+³ xsha256     [0F_A6_D0]              Hash Function SHA-256               ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³                     %BIntel-Atom instruction mnemonics%b                    ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ movbe       [0F_38_F0],[0F_38_F1]   Move Data After Swapping Bytes      ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³                     %BXeon5200 instruction mnemonics%b                      ³
+³ %BXeon5200%b%I is the name for a new (11th in biew terms) generation%i          ³
+³ %Iof IA32 processors which introduces new instructions (unofficially   %i   ³
+³ %Inamed as SSE4)%i                                                          ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ SSE4.1 ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ blendpd     [66_0F_3A_OD/r/i8]      Blend Packet F64                    ³
+³ blendps     [66_0F_3A_OC/r/i8]      Blend Packet F32                    ³
+³ blendvpd    [66_0F_38_15/r]         Variable Blend Packet F64           ³
+³ blendvps    [66_0F_38_14/r]         Variable Blend Packet F32           ³
+³ dppd        [66_0F_3A_41/r/i8]      Dot product of Packet F64           ³
+³ dpps        [66_0F_3A_40/r/i8]      Dot product of Packet F32           ³
+³ extractps   [66_0F_3A_17/r/i8]      Extract Packet F32                  ³
+³ insertps    [66_0F_3A_21/r/i8]      Insert Packet F32                   ³
+³ movntdqa    [66_0F_38_2A/r]         Load U128 Non-Temporal Aligned      ³
+³ mpsadbw     [66_0F_3A_42/r]         Multiple Packet Sums of Abs S16 Diff³
+³ packusdw    [66_0F_38_2B/r]         Pack U32 to U16 with Saturation     ³
+³ pblendvb    [66_0F_38_10/r]         Variable Blend Packet U8            ³
+³ pblendw     [66_0F_3A_0E/r/i8]      Blend Packet U16                    ³
+³ pcmpeqq     [66_0F_38_29/r]         Compare Packet U64 for Equal        ³
+³ pextrb      [66_0F_3A_14/r/i8]      Extract U8                          ³
+³ pextrd      [66_0F_3A_16/r/i8]      Extract U32                         ³
+³ pextrq      [66_Rex_0F_3A_16/r/i8]  Extract U64                         ³
+³ pinsrb      [66_0F_3A_20/r/i8]      Insert U8                           ³
+³ pinsrd      [66_0F_3A_22/r/i8]      Insert U32                          ³
+³ pinsrq      [66_Rex_0F_3A_22/r/i8]  Insert U64                          ³
+³ phminposuw  [66_0F_38_41/r]         Packet Horizontal U16 Minimum       ³
+³ pmaxsb      [66_0F_38_3C/r]         Maximum of Packet S8                ³
+³ pmaxsd      [66_0F_38_3D/r]         Maximum of Packet S32               ³
+³ pmaxud      [66_0F_38_3F/r]         Maximum of Packet U32               ³
+³ pmaxuw      [66_0F_38_3E/r]         Maximum of Packet U16               ³
+³ pminsb      [66_0F_38_38/r]         Minimum of Packet S8                ³
+³ pminsd      [66_0F_38_39/r]         Minimum of Packet S32               ³
+³ pminud      [66_0F_38_3B/r]         Minimum of Packet U32               ³
+³ pminuw      [66_0F_38_3A/r]         Minimum of Packet U16               ³
+³ pmovsxbw    [66_0F_38_20/r]         Packet Move S8 to Sign-Extend S16   ³
+³ pmovsxbd    [66_0F_38_21/r]         Packet Move S8 to Sign-Extend S32   ³
+³ pmovsxbq    [66_0F_38_22/r]         Packet Move S8 to Sign-Extend S64   ³
+³ pmovsxwd    [66_0F_38_23/r]         Packet Move S16 to Sign-Extend S32  ³
+³ pmovsxwq    [66_0F_38_24/r]         Packet Move S16 to Sign-Extend S64  ³
+³ pmovsxdq    [66_0F_38_25/r]         Packet Move S32 to Sign-Extend S64  ³
+³ pmovzxbw    [66_0F_38_30/r]         Packet Move U8 to Zero-Extend U16   ³
+³ pmovzxbd    [66_0F_38_31/r]         Packet Move U8 to Zero-Extend U32   ³
+³ pmovzxbq    [66_0F_38_32/r]         Packet Move U8 to Zero-Extend U64   ³
+³ pmovzxwd    [66_0F_38_33/r]         Packet Move U16 to Zero-Extend U32  ³
+³ pmovzxwq    [66_0F_38_34/r]         Packet Move U16 to Zero-Extend U64  ³
+³ pmovzxdq    [66_0F_38_35/r]         Packet Move U32 to Zero-Extend U64  ³
+³ pmuldq      [66_0F_38_28/r]         Mul Packet Double-S64               ³
+³ pmulld      [66_0F_38_40/r]         Mul Packet S32 and store Lows       ³
+³ ptest       [66_0F_38_17/r]         Packet Logical Compare              ³
+³ roundpd     [66_0F_3A_09/r/i8]      Round Packet F64                    ³
+³ roundps     [66_0F_3A_08/r/i8]      Round Packet F32                    ³
+³ roundsd     [66_0F_3A_0B/r/i8]      Round Scalar F64                    ³
+³ roundss     [66_0F_3A_0A/r/i8]      Round Scalar F32                    ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ SSE4.2 ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ crc32       [F2_0F_38_F0/r]         Accumulate CRC-32 Value (011EDC6F41)³
+³ crc32       [F2_0F_38_F1/r]         Accumulate CRC-32 Value (011EDC6F41)³
+³ pcmpestri   [66_0F_3A_61/r/i8]      Pack Cmp Explicit Length String, idx³
+³ pcmpestrm   [66_0F_3A_60/r/i8]      Pack Cmp Explicit Length String, msk³
+³ pcmpistri   [66_0F_3A_63/r/i8]      Pack Cmp Implicit Length String, idx³
+³ pcmpistrm   [66_0F_3A_62/r/i8]      Pack Cmp Implicit Length String, msk³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ K64 Fam10 sse4a ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ extrq       [66_0F_78/0/ib/ib]      Extracts from lower U64             ³
+³ extrq       [66_0F_79/r]            Extracts from lower U64             ³
+³ insertq     [F2_0F_78/0/ib/ib]      Inserts from lower U64              ³
+³ insertq     [F2_0F_79/r]            Inserts from lower U64              ³
+³ movntsd     [F2_0F_2B/r]            Stores Scalar F64 non temporary     ³
+³ movntss     [F3_0F_79/r]            Stores Scalar F32 non temporary     ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ K64 Fam10 ABM ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ lzcnt       [F3_0F_BD/r]            Count of Number of leading zeros    ³
+³ popcnt      [F3_0F_B8/r]            Count of Number set to 1 bits       ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ K64 Fam10 SVM ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ clgi        [0F_01_DD]              Clear global interrupt flag         ³
+³ invlpga     [0F_01_DF]              Invalidates TLB mapping for vrt.page³
+³ skinit      [0F_01_DE]              Securely reinit CPU to run VMM      ³
+³ stgi        [0F_01_DC]              Store global interrupt flag         ³
+³ vmload      [0F_01_DA]              Load additional guest stat from VMCB³
+³ vmmcall     [0F_01_D9]              Explicit communication with VMM     ³
+³ vmrun       [0F_01_D8]              Start execution of VMM              ³
+³ vmsave      [0F_01_DB]              Save additional guest state to VMCB ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³                     %BSandy Bridge instruction mnemonics%b                  ³
+³ %BSandy Bridge%b%I is the codename for a processor microarchitecture that%i     ³
+³ %Iis being developed by Intel and is the planned successor to Nehalem.%i    ³
+³ This technology adds %IVEX%i codeing sheme. If VEX prefix precedes opcode   ³
+³ then v prefixes is being added to opcode name. Example: %Baddps%b with VEX  ³
+³ prefix shall be writen as %Bvaddps%b.                                       ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ %BVEX encoding%b:                                                           ³
+³ %IVEX%i is C4, C5 opcodes                                                   ³
+³                   Byte 0         Byte 1             Byte 2              ³
+³  (Bit Position) 7        0   7 6 5 4        0   7 6    3 2 1 0          ³
+³                ÚÄÄÄÄÄÄÄÄÄÄ¿ ÚÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿ ÚÄÂÄÄÄÄÄÄÂÄÂÄÄÄ¿         ³
+³  3-byte VEX C4 ³ 11000100 ³ ³R X B³  m-mmmm  ³ ³W³ vvvv ³L³ pp³         ³
+³                ÀÄÄÄÄÄÄÄÄÄÄÙ ÀÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÙ ÀÄÁÄÄÄÄÄÄÁÄÁÄÄÄÙ         ³
+³                 7        0   7 6   3 2 1 0                              ³
+³                ÚÄÄÄÄÄÄÄÄÄÄ¿ ÚÄÂÄÄÄÄÄÂÄÂÄÄÄ¿                             ³
+³  2-byte VEX C5 ³ 11000101 ³ ³R³ vvvv³L³ pp³                             ³
+³                ÀÄÄÄÄÄÄÄÄÄÄÙ ÀÄÁÄÄÄÄÄÁÄÁÄÄÄÙ                             ³
+³                                                                         ³
+³   %IR%i: REX.R in 1's complement (inverted) form                            ³
+³      1: Same as REX.R=0 (must be 1 in 32-bit mode)                      ³
+³      0: Same as REX.R=1 (64-bit mode only)                              ³
+³   %IX%i: REX.X in 1's complement (inverted) form                            ³
+³      1: Same as REX.X=0 (must be 1 in 32-bit mode)                      ³
+³      0: Same as REX.X=1 (64-bit mode only)                              ³
+³   %IB%i: REX.B in 1's complement (inverted) form                            ³
+³      1: Same as REX.B=0 (Ignored in 32-bit mode).                       ³
+³      0: Same as REX.B=1 (64-bit mode only)                              ³
+³   %IW%i: opcode specific. Use like REX.W, or used for memory operand        ³
+³      select on 4-operand instructions, or ignored, depending on the code³
+³   %Im-mmmm%i:                                                               ³
+³     00000: Reserved for future use (will #UD)                           ³
+³     00001: implied 0F leading opcode byte                               ³
+³     00010: implied 0F 38 leading opcode bytes                           ³
+³     00011: implied 0F 3A leading opcode bytes                           ³
+³     00100-11111: Reserved for future use (will #UD)                     ³
+³   %Ivvvv%i: a register specifier (in 1's complement form) or 1111 if unused.³
+³   %IL%i: Vector Length                                                      ³
+³        0: scalar or 128-bit vector                                      ³
+³        1: 256-bit vector                                                ³
+³   %Ipp%i: opcode extension providing equivalent functionality of a SIMD pfx ³
+³        00: None                                                         ³
+³        01: 66                                                           ³
+³        10: F3                                                           ³
+³        11: F2                                                           ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ CLMUL ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ pclmulqdq   [66_0F_3A_44]           Carry-Less Mult. of S64 to S128     ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ AES ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ aesenc      [66_0F_38_DC]           Perform 1 round of an AES encryption³
+³ aesenclast  [66_0F_38_DD]           Perform the last round of an AES enc³
+³ aesdec      [66_0F_38_DE]           Perform 1 round of an AES decryption³
+³ aesdeclast  [66_0F_38_DF]           Perform the last round of an AES dec³
+³ aesimc      [66_0F_38_DB]           Perform the InvMixColumn transform  ³
+³ aeskeygenassist[66_0F_3A_DF]        Assist in AES rnd keygen using S8 RC³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ AVX ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ vaddpd       VEX[66_0F_58]          Packed F64 Add                      ³
+³ vaddps       VEX[0F_58]             Packed F32 Add                      ³
+³ vaddsubpd    VEX[66_0F_D0/rm]       Packet F64 Add/Substract            ³
+³ vaddsubps    VEX[F2_0F_D0/rm]       Packet F32 Add/Substract            ³
+³ vandpd       VEX[66_0F_54]          Bitwise Logical And for F64         ³
+³ vandps       VEX[0F_54]             Bitwise Logical And for F32         ³
+³ vandnpd      VEX[66_0F_55]          Bitwise Logical AndNot for F64      ³
+³ vandnps      VEX[0F_55]             Bitwise Logical AndNot for F32      ³
+³ vblendpd     VEX[66_0F_3A_OD/r/i8]  Blend Packet F64                    ³
+³ vblendps     VEX[66_0F_3A_OC/r/i8]  Blend Packet F32                    ³
+³ vblendvpd    VEX[66_0F_38_15/r]     Variable Blend Packet F64           ³
+³ vblendvps    VEX[66_0F_38_14/r]     Variable Blend Packet F32           ³
+³ vbroadcastss VEX[66_0F_38_18]       Broadcast F32 element in mem locat. ³
+³ vbroadcastsd VEX[66_0F_38_19]       Broadcast F64 element in mem locat. ³
+³ vbroadcastf128 VEX[66_0F_38_1A]     Broadcast F128 element in mem locat.³
+³ vcmpeqpd     VEX[66_0F_C2/rm/00]    Packet F64 Compare (Equal)          ³
+³ vcmplepd     VEX[66_0F_C2/rm/02]    Packet F64 Compare (Less|Equal)     ³
+³ vcmpltpd     VEX[66_0F_C2/rm/01]    Packet F64 Compare (LessThan)       ³
+³ vcmpneqpd    VEX[66_0F_C2/rm/04]    Packet F64 Compare (!Equal)         ³
+³ vcmpnlepd    VEX[66_0F_C2/rm/06]    Packet F64 Compare (!(Less|Equal))  ³
+³ vcmpnltpd    VEX[66_0F_C2/rm/05]    Packet F64 Compare (!LessThan)      ³
+³ vcmpordpd    VEX[66_0F_C2/rm/07]    Packet F64 Compare (Ordered)        ³
+³ vcmppd       VEX[66_0F_C2/rm/XX]    Packet F64 Compare                  ³
+³ vcmpunordpd  VEX[66_0F_C2/rm/03]    Packet F64 Compare (UnOrdered)      ³
+³ vcmpeqps     VEX[0F_C2/rm/00]       Packet F32 Compare (Equal)          ³
+³ vcmpleps     VEX[0F_C2/rm/02]       Packet F32 Compare (Less|Equal)     ³
+³ vcmpltps     VEX[0F_C2/rm/01]       Packet F32 Compare (LessThan)       ³
+³ vcmpneqps    VEX[0F_C2/rm/04]       Packet F32 Compare (!Equal)         ³
+³ vcmpnleps    VEX[0F_C2/rm/06]       Packet F32 Compare (!(Less|Equal))  ³
+³ vcmpnltps    VEX[0F_C2/rm/05]       Packet F32 Compare (!LessThan)      ³
+³ vcmpordps    VEX[0F_C2/rm/07]       Packet F32 Compare (Ordered)        ³
+³ vcmpps       VEX[0F_C2/rm/XX]       Packet F32 Compare                  ³
+³ vcmpunordps  VEX[0F_C2/rm/03]       Packet F32 Compare (UnOrdered)      ³
+³ vcmpeqsd     VEX[F2_0F_C2/rm/00]    Scalar F64 Compare (Equal)          ³
+³ vcmplesd     VEX[F2_0F_C2/rm/02]    Scalar F64 Compare (Less|Equal)     ³
+³ vcmpltsd     VEX[F2_0F_C2/rm/01]    Scalar F64 Compare (LessThan)       ³
+³ vcmpneqsd    VEX[F2_0F_C2/rm/04]    Scalar F64 Compare (!Equal)         ³
+³ vcmpnlesd    VEX[F2_0F_C2/rm/06]    Scalar F64 Compare (!(Less|Equal))  ³
+³ vcmpnltsd    VEX[F2_0F_C2/rm/05]    Scalar F64 Compare (!LessThan)      ³
+³ vcmpordsd    VEX[F2_0F_C2/rm/07]    Scalar F64 Compare (Ordered)        ³
+³ vcmpsd       VEX[F2_0F_C2/rm/XX]    Scalar F64 Compare                  ³
+³ vcmpunordsd  VEX[F2_0F_C2/rm/03]    Scalar F64 Compare (UnOrdered)      ³
+³ vcmpeqss     VEX[F3_0F_C2/rm/00]    Scalar F32 Compare (Equal)          ³
+³ vcmpless     VEX[F3_0F_C2/rm/02]    Scalar F32 Compare (Less|Equal)     ³
+³ vcmpltss     VEX[F3_0F_C2/rm/01]    Scalar F32 Compare (LessThan)       ³
+³ vcmpneqss    VEX[F3_0F_C2/rm/04]    Scalar F32 Compare (!Equal)         ³
+³ vcmpnless    VEX[F3_0F_C2/rm/06]    Scalar F32 Compare (!(Less|Equal))  ³
+³ vcmpnltss    VEX[F3_0F_C2/rm/05]    Scalar F32 Compare (!LessThan)      ³
+³ vcmpordss    VEX[F3_0F_C2/rm/07]    Scalar F32 Compare (Ordered)        ³
+³ vcmpss       VEX[F3_0F_C2/rm/XX]    Scalar F32 Compare                  ³
+³ vcmpunordss  VEX[F3_0F_C2/rm/03]    Scalar F32 Compare (UnOrdered)      ³
+³ vcomisd      VEX[66_0F_2F]          Scalar Ordered F64 Compare          ³
+³ vcomiss      VEX[0F_2F]             Scalar Ordered F32 Compare          ³
+³ vcvtdq2pd    VEX[F3_0F_E6]          Packed S64 to F64 cvt               ³
+³ vcvtdq2ps    VEX[0F_5B]             Packed S64 to F32 cvt               ³
+³ vcvtpd2dq    VEX[F2_0F_E6]          Packed F64 to packed S64 cvt        ³
+³ vcvtpd2ps    VEX[66_0F_5A]          Packed F64 to packed F32 cvt        ³
+³ vcvtps2dq    VEX[66_0F_5B]          Packed F32 to packed S64 cvt        ³
+³ vcvtps2pd    VEX[0F_5A]             Packed F32 to packed F64 cvt        ³
+³ vcvtsd2si    VEX[F2_0F_2D]          Scalar F64 to S32 cvt&trunc         ³
+³ vcvtsd2ss    VEX[F2_0F_5A]          Scalar F64 to F32 cvt               ³
+³ vcvtsi2sd    VEX[F2_0F_2A]          Scalar S32 to scalar F64 cvt        ³
+³ vcvtss2sd    VEX[F3_0F_5A]          Scalar F32 to scalar F64 cvt        ³
+³ vcvttpd2dq   VEX[66_0F_E6]          Packed F64 to S64 cvt&trunc         ³
+³ vcvttps2dq   VEX[F3_0F_5B]          Packed F32 to S64 cvt&trunc         ³
+³ vcvttsd2si   VEX[F2_0F_2C]          Scalar F64 to S32 cvt&trunc         ³
+³ vcvttss2si   VEX[F3_0F_2C]          Scalar F32 to S32 with trunc        ³
+³ vdivps       VEX[0F_5E]             Packed F32 Divide                   ³
+³ vdivpd       VEX[66_0F_5E]          Packed F64 Divide                   ³
+³ vdivss       VEX[F3_0F_5E]          Scalar F32 Divide                   ³
+³ vdivsd       VEX[F2_0F_5E]          Scalar F64 Divide                   ³
+³ vdppd        VEX[66_0F_3A_41/r/i8]  Dot product of Packet F64           ³
+³ vdpps        VEX[66_0F_3A_40/r/i8]  Dot product of Packet F32           ³
+³ vextractf128 VEX[66_0F_3A_19]       Extract Packet F128                 ³
+³ vextractps   VEX[66_0F_3A_17/r/i8]  Extract Packet F32                  ³
+³ vhaddpd      VEX[66_0F_7C/rm]       Packet F64 Horizontal Add           ³
+³ vhaddps      VEX[F2_0F_7C/rm]       Packet F32 Horizontal Add           ³
+³ vhsubpd      VEX[66_0F_7D/rm]       Packet F64 Horizontal Substract     ³
+³ vhsubps      VEX[F2_0F_7D/rm]       Packet F32 Horizontal Substract     ³
+³ vinsertf128  VEX[66_0F_3A_21/r/i8]  Insert Packet F128                  ³
+³ vinsertps    VEX[66_0F_3A_21/r/i8]  Insert Packet F32                   ³
+³ vlddqu       VEX[F2_0F_F0/rm]       Load unaligned Packed U128          ³
+³ vldmxcsr     VEX[0F_AE/2]           Load AVX control/status register    ³
+³ vmaskmovdqu  VEX[66_0F_F7]          Mask move of U128 unaligned         ³
+³ vmaskmovps   VEX[66_0F_38_2C]       Load packed F32 using mask          ³
+³ vmaskmovps   VEX[66_0F_38_2E]       Store packed F32 using mask         ³
+³ vmaskmovpd   VEX[66_0F_38_2D]       Load packed F64 using mask          ³
+³ vmaskmovpd   VEX[66_0F_38_2F]       Store packed F64 using mask         ³
+³ vmaxpd       VEX[66_0F_5F]          Packed F64 maximum                  ³
+³ vmaxps       VEX[0F_5F]             Packed F32 maximum                  ³
+³ vmaxsd       VEX[F2_0F_5F]          Scalar F64 maximum                  ³
+³ vmaxss       VEX[F3_0F_5F]          Scalar F32 maximum                  ³
+³ vminpd       VEX[66_0F_5D]          Packed F64 minimum                  ³
+³ vminps       VEX[0F_5D]             Packed F32 minimum                  ³
+³ vminsd       VEX[F2_0F_5D]          Scalar F64 minimum                  ³
+³ vminss       VEX[F3_0F_5D]          Scalar F32 minimum                  ³
+³ vmovaps      VEX[0F_28;0F_29]       Move Aligned Packed F32             ³
+³ vmovapd      VEX[66_0F_28;66_0F_29] Move Aligned Packed F64             ³
+³ vmovd        VEX[66_0F_6E;66_0F_7E] Move U32 (xmmx)                     ³
+³ vmovq        VEX[F3_0F_7E;66_0F_D6] Move U64 (xmmx)                     ³
+³ vmovddup     VEX[F2_0F_12/rm]       Move one F64 and duplicate          ³
+³ vmovdqa      VEX[66_0F_6F;66_0F_7F] Move Aligned U128                   ³
+³ vmovdqu      VEX[F3_0F_6F;F3_0F_7F] Move Unaligned U128                 ³
+³ vmovhlps     VEX[0F_12:3]           Move High to Low Packed F32         ³
+³ vmovhpd      VEX[66_0F_16;66_0F_17] Move High Packed F64                ³
+³ vmovhps      VEX[0F_16;0F_17]       Move High Packed F32                ³
+³ vmovlpd      VEX[66_0F_12;66_0F_13] Move Low Packed F64                 ³
+³ vmovlhps     VEX[0F_16:3]           Move low to High Packed F32         ³
+³ vmovlps      VEX[0F_12;0F_13]       Move Low Packed F32                 ³
+³ vmovmskpd    VEX[66_0F_50:3]        Extract Sign Mask of Packed F64     ³
+³ vmovmskps    VEX[0F_50:3]           Move Mask to Integer                ³
+³ vmovntdq     VEX[66_0F_E7]          Move packed U128 Non Temporal       ³
+³ vmovntdqa    VEX[66_0F_38_2A/r]     Load U128 Non-Temporal Aligned      ³
+³ vmovntpd     VEX[66_0F_2B]          Move packed F64 Non Temporal        ³
+³ vmovntps     VEX[0F_2B]             Mov Align. Packed F32 non Temporal  ³
+³ vmovsd       VEX[F2_0F_10;F2_0F_11] Move Scalar F64                     ³
+³ vmovshdup    VEX[F3_0F_16/rm]       Move packet F32 High and dup        ³
+³ vmovsldup    VEX[F3_0F_12/rm]       Move packet F32 Low and dup         ³
+³ vmovss       VEX[F3_0F_10;F3_0F_11] Move Scalar F32                     ³
+³ vmovupd      VEX[66_0F_10;66_0F_11] Move Unaligned Packed F64           ³
+³ vmovups      VEX[0F_10;0F_11]       Move Unaligned Packed F32           ³
+³ vmpsadbw     VEX[66_0F_3A_42/r]     Multiple Packet Sums of Abs S16 Diff³
+³ vmulpd       VEX[66_0F_59]          Packed F64 Multiply                 ³
+³ vmulps       VEX[0F_59]             Packed F32 Multiply                 ³
+³ vmulsd       VEX[F2_0F_59]          Scalar F64 Multiply                 ³
+³ vmulss       VEX[F3_0F_59]          Scalar F32 Multiply                 ³
+³ vorpd        VEX[66_0F_56]          Bitwise Logical OR for F64          ³
+³ vorps        VEX[0F_56]             Bitwise Logical OR for F32          ³
+³ vpabsb       VEX[66_0F_38_1C/r]     Packet Absolute value for ymmx S8   ³
+³ vpabsw       VEX[66_0F_38_1D/r]     Packet Absolute value for ymmx S16  ³
+³ vpabsd       VEX[66_0F_38_1E/r]     Pack Absolute value for ymmx S32    ³
+³ vpackssdw    VEX[66_0F_6B]          Pack S32 to S16 (with saturation)   ³
+³ vpacksswb    VEX[66_0F_63]          Pack S16 to S8 (with saturation)    ³
+³ vpackusdw    VEX[66_0F_38_2B/r]     Pack U32 to U16 with Saturation     ³
+³ vpackuswb    VEX[66_0F_67]          Pack U16 to U8 (with saturation)    ³
+³ vpaddb       VEX[66_0F_FC]          Packed Add U8 with wrap-around      ³
+³ vpaddd       VEX[66_0F_FE]          Packed Add U32 with wrap-around     ³
+³ vpaddq       VEX[66_0F_D4]          Packed Add U64                      ³
+³ vpaddsb      VEX[66_0F_EC]          Packed Add S8 with saturation       ³
+³ vpaddsw      VEX[66_0F_ED]          Packed Add S16 with saturation      ³
+³ vpaddusb     VEX[66_0F_DC]          Packed Add U8 with saturation       ³
+³ vpaddusw     VEX[66_0F_DD]          Packed Add U16 with saturation      ³
+³ vpaddw       VEX[66_0F_FD]          Packed Add U16 with wrap-around     ³
+³ vpalignr     VEX[66_0F_3A_0F]       Packet Align Right                  ³
+³ vpand        VEX[66_0F_DB]          Bitwise AND                         ³
+³ vpandn       VEX[66_0F_DF]          Bitwise AndNot                      ³
+³ vpavgb       VEX[66_0F_E0]          Packed Average U8                   ³
+³ vpavgw       VEX[66_0F_E3]          Packed Average U16                  ³
+³ vpblendvb    VEX[66_0F_38_10/r]     Variable Blend Packet U8            ³
+³ vpblendw     VEX[66_0F_3A_0E/r/i8]  Blend Packet U16                    ³
+³ vpcmpestri   VEX[66_0F_3A_61/r/i8]  Pack Cmp Explicit Length String, idx³
+³ vpcmpestrm   VEX[66_0F_3A_60/r/i8]  Pack Cmp Explicit Length String, msk³
+³ vpcmpistri   VEX[66_0F_3A_63/r/i8]  Pack Cmp Implicit Length String, idx³
+³ vpcmpistrm   VEX[66_0F_3A_62/r/i8]  Pack Cmp Implicit Length String, msk³
+³ vpcmpeqb     VEX[66_0F_74]          Packed Compare U8 for equality      ³
+³ vpcmpeqd     VEX[66_0F_76]          Packed Compare U32 for equality     ³
+³ vpcmpeqq     VEX[66_0F_38_29/r]     Compare Packet U64 for Equal        ³
+³ vpcmpeqw     VEX[66_0F_75]          Packed Compare U16 for equality     ³
+³ vpcmpgtb     VEX[66_0F_64]          Packed Compare Greater S8           ³
+³ vpcmtgtd     VEX[66_0F_66]          Packed Compare Greater S32          ³
+³ vpcmtgtq     VEX[66_0F_38_37]       Packed Compare Greater S32          ³
+³ vpcmtgtw     VEX[66_0F_65]          Packed Compare Greater S16          ³
+³ vpermilpd    VEX[66_0F_38_0D;3A_05] Permute F64                         ³
+³ vpermilps    VEX[66_0F_38_0C;3A_04] Permute F32                         ³
+³ vperm2f128   VEX[66_0F_3A_06]       Permute F128                        ³
+³ vpextrb      VEX[66_0F_3A_14/r/i8]  Extract U8                          ³
+³ vpextrd      VEX[66_0F_3A_16/r/i8]  Extract U32                         ³
+³ vpextrq      VEX[66_Rex_0F_3A_16]   Extract U64                         ³
+³ vpextrw      VEX[66_0F_C5:3]        Extract U16 (xmmx)                  ³
+³ vphaddw      VEX[66_0F_38_01]       Packet Horizontal Add S16           ³
+³ vphaddd      VEX[66_0F_38_02]       Packet Horizontal Add S32           ³
+³ vphaddsw     VEX[66_0F_38_03]       Packet Horz Add and Saturate S16    ³
+³ vphminposuw  VEX[66_0F_38_41/r]     Packet Horizontal U16 Minimum       ³
+³ vphsubw      VEX[66_0F_38_05]       Packet Horizontal Sub S16           ³
+³ vphsubd      VEX[66_0F_38_06]       Packet Horizontal Sub S32           ³
+³ vphsubsw     VEX[66_0F_38_07]       Packet Horz Sub and Saturate S16    ³
+³ vpinsrb      VEX[66_0F_3A_20/r/i8]  Insert U8                           ³
+³ vpinsrd      VEX[66_0F_3A_22/r/i8]  Insert U32                          ³
+³ vpinsrq      VEX[66_Rex_0F_3A_22]   Insert U64                          ³
+³ vpinsrw      VEX[66_0F_C4]          Insert U16                          ³
+³ vpmaddwd     VEX[66_0F_F5]          Packed Multiply U16 and Add U32     ³
+³ vpmaddubsw   VEX[66_0F_38_04]       Multiply U8 and Add Packet S16      ³
+³ vpmaxsb      VEX[66_0F_38_3C/r]     Maximum of Packet S8                ³
+³ vpmaxsd      VEX[66_0F_38_3D/r]     Maximum of Packet S32               ³
+³ vpmaxsw      VEX[66_0F_EE]          Packed S16 maximum                  ³
+³ vpmaxub      VEX[66_0F_DE]          Packed U8 maximum                   ³
+³ vpmaxud      VEX[66_0F_38_3F/r]     Maximum of Packet U32               ³
+³ vpmaxuw      VEX[66_0F_38_3E/r]     Maximum of Packet U16               ³
+³ vpminsb      VEX[66_0F_38_38/r]     Minimum of Packet S8                ³
+³ vpminsd      VEX[66_0F_38_39/r]     Minimum of Packet S32               ³
+³ vpminsw      VEX[66_0F_EA]          Packed S16 minimum                  ³
+³ vpminub      VEX[66_0F_DA]          Packed U8 minimum                   ³
+³ vpminud      VEX[66_0F_38_3B/r]     Minimum of Packet U32               ³
+³ vpminuw      VEX[66_0F_38_3A/r]     Minimum of Packet U16               ³
+³ vpmovmskb    VEX[66_0F_D7:3]        Packed move U8 Mask                 ³
+³ vpmovsxbw    VEX[66_0F_38_20/r]     Packet Move S8 to Sign-Extend S16   ³
+³ vpmovsxbd    VEX[66_0F_38_21/r]     Packet Move S8 to Sign-Extend S32   ³
+³ vpmovsxbq    VEX[66_0F_38_22/r]     Packet Move S8 to Sign-Extend S64   ³
+³ vpmovsxwd    VEX[66_0F_38_23/r]     Packet Move S16 to Sign-Extend S32  ³
+³ vpmovsxwq    VEX[66_0F_38_24/r]     Packet Move S16 to Sign-Extend S64  ³
+³ vpmovsxdq    VEX[66_0F_38_25/r]     Packet Move S32 to Sign-Extend S64  ³
+³ vpmovzxbw    VEX[66_0F_38_30/r]     Packet Move U8 to Zero-Extend U16   ³
+³ vpmovzxbd    VEX[66_0F_38_31/r]     Packet Move U8 to Zero-Extend U32   ³
+³ vpmovzxbq    VEX[66_0F_38_32/r]     Packet Move U8 to Zero-Extend U64   ³
+³ vpmovzxwd    VEX[66_0F_38_33/r]     Packet Move U16 to Zero-Extend U32  ³
+³ vpmovzxwq    VEX[66_0F_38_34/r]     Packet Move U16 to Zero-Extend U64  ³
+³ vpmovzxdq    VEX[66_0F_38_35/r]     Packet Move U32 to Zero-Extend U64  ³
+³ vpmulhuw     VEX[66_0F_E4]          Packed Multiply High U16            ³
+³ vpmulhrsw    VEX[66_0F_38_0B]       Mul High w Round and Scale S16      ³
+³ vpmulhw      VEX[66_0F_E5]          Packed Multiplication high S16      ³
+³ vpmulld      VEX[66_0F_38_40/r]     Mul Packet S32 and store Lows       ³
+³ vpmullw      VEX[66_0F_D5]          Packed Multiplication low U16       ³
+³ vpmuldq      VEX[66_0F_38_28/r]     Mul Packet Double-S64               ³
+³ vpmuludq     VEX[0F_F4;66_0F_F4]    Multiply U32                        ³
+³ vpor         VEX[66_0F_EB]          Bitwise OR                          ³
+³ vpsadbw      VEX[66_0F_F6]          Packed Sum of Absolute U16 Differenc³
+³ vpshufb      VEX[66_0F_38_00]       Packet Shuffle U8                   ³
+³ vpshufd      VEX[66_0F_70]          Packed Shuffle U32                  ³
+³ vpshufhw     VEX[F3_0F_70]          Packed Shuffle High U16             ³
+³ vpshuflw     VEX[F2_0F_70]          Packed Shuffle Low U16              ³
+³ vpsignb      VEX[66_0F_38_08]       Negate Packet S8 xmmx               ³
+³ vpsignw      VEX[66_0F_38_09]       Negate Packet S16 xmmx              ³
+³ vpsignd      VEX[66_0F_38_0A]       Negate Packet S32 xmmx              ³
+³ vpslldq      VEX[66_0F_73/7]        Packed Shift left logical U128      ³
+³ vpsrldq      VEX[66_0F_73/3]        Packed Shift Right logical U128     ³
+³ vpslld       VEX[66_0F_F2;66_0F_72/6]Packed Shift Left U32 Logical      ³
+³ vpsllq       VEX[66_0F_F3;66_0F_73/6]Packed Shift Left U64 Logical      ³
+³ vpsllw       VEX[66_0F_F1;66_0F_71/6]Packed Shift Left U16 Logical      ³
+³ vpsrad       VEX[66_0F_E2;66_0F_72/4]Packed Shift Right S32 Arithmetic  ³
+³ vpsraw       VEX[66_0F_E1;66_0F_71/4]Packed Shift Right S16 Arithmetic  ³
+³ vpsrld       VEX[66_0F_D2;66_0F_72/2]Packed Shift Right U32 Logical     ³
+³ vpsrlq       VEX[66_0F_D3;66_0F_73/2]Packed Shift Right U64 Logical     ³
+³ vpsrlw       VEX[66_0F_D1;66_0F_71/2]Packed Shift Right U16 Logical     ³
+³ vptest       VEX[66_0F_38_17/r]     Packet Logical Compare              ³
+³ vptestpd     VEX[66_0F_38_0F]       Packet Logical Compare F32          ³
+³ vptestps     VEX[66_0F_38_0E]       Packet Logical Compare F64          ³
+³ vpsubb       VEX[66_0F_F8]          Substract U8 with wrap-around       ³
+³ vpsubd       VEX[66_0F_FA]          Substract U32 with wrap-around      ³
+³ vpsubq       VEX[66_0F_FB]          Packed substract U64                ³
+³ vpsubw       VEX[66_0F_F9]          Packed substract U16                ³
+³ vpsubsb      VEX[66_0F_E8]          Substract S8 with saturation        ³
+³ vpsubsw      VEX[66_0F_E9]          Substract S16 with saturation       ³
+³ vpsubusb     VEX[66_0F_D8]          Substract U8 with saturation        ³
+³ vpsubusw     VEX[66_0F_D9]          Substract U16 with saturation       ³
+³ vpunpckhbw   VEX[66_0F_68]          Unpack high U8 to U16               ³
+³ vpunpckhdq   VEX[66_0F_6A]          Unpack high U32 to U64              ³
+³ vpunpckhqdq  VEX[66_0F_6D]          Interleave high U64                 ³
+³ vpunpckhwd   VEX[66_0F_69]          Unpack high U16 to U32              ³
+³ vpunpcklbw   VEX[66_0F_60]          Unpack low U8 to U16                ³
+³ vpunpcklqd   VEX[66_0F_62]          Unpack low U32 to U64               ³
+³ vpunpcklqdq  VEX[66_0F_6C]          Interleave low U64 in               ³
+³ vpunpcklwd   VEX[66_0F_61]          Unpack low U16 to U32               ³
+³ vpxor        VEX[66_0F_EF]          Bitwise XOR                         ³
+³ vrcpps       VEX[0F_53]             Packed F32 Reciprocal               ³
+³ vrcpss       VEX[F3_0F_53]          Scalar F32 Reciprocal               ³
+³ vrsqrtps     VEX[0F_52]             Packed F32 Square Root Recip.       ³
+³ vrsqrtss     VEX[F3_0F_52]          Scalar F32 Square Root Recip.       ³
+³ vroundpd     VEX[66_0F_3A_09/r/i8]  Round Packet F64                    ³
+³ vroundps     VEX[66_0F_3A_08/r/i8]  Round Packet F32                    ³
+³ vroundsd     VEX[66_0F_3A_0B/r/i8]  Round Scalar F64                    ³
+³ vroundss     VEX[66_0F_3A_0A/r/i8]  Round Scalar F32                    ³
+³ vshufpd      VEX[66_0F_C6]          Shuffle F64                         ³
+³ vshufps      VEX[0F_C6]             Shuffle F32                         ³
+³ vsqrtps      VEX[0F_51]             Packed F32 Square Root              ³
+³ vsqrtss      VEX[F3_0F_51]          Scalar F32 Square Root              ³
+³ vsqrtpd      VEX[66_0F_51]          Packed F64 Square Root              ³
+³ vsqrtsd      VEX[F2_0F_51]          Scalar F64 Square Root              ³
+³ vstmxcsr     VEX[0F_AE/3]           Store AVX control/status register   ³
+³ vsubpd       VEX[66_0F_5C]          Packed F64 Substract                ³
+³ vsubps       VEX[0F_5C]             Packed F32 Substract                ³
+³ vsubsd       VEX[F2_0F_5C]          Scalar F64 Substract                ³
+³ vsubss       VEX[F3_0F_5C]          Scalar F32 Substract                ³
+³ vucomiss     VEX[0F_2E]             Unordered F32 compare               ³
+³ vucomisd     VEX[66_0F_2E]          Unordered F64 compare               ³
+³ vunpckhpd    VEX[66_0F_15]          Unpack High Packed F64 Data         ³
+³ vunpckhps    VEX[0F_15]             Unpack High Packed F32 Data         ³
+³ vunpcklpd    VEX[66_0F_14]          Unpack Low Packed F64 Data          ³
+³ vunpcklps    VEX[0F_14]             Unpack Low Packed F32 Data          ³
+³ vxorpd       VEX[66_0F_57]          Bitwise Logical XOR for F64         ³
+³ vxorps       VEX[0F_57]             Bitwise Logical XOR for F32         ³
+³ vzeroall     VEX[0F_77]             Zero All YMM registers              ³
+³ veroupper    VEX[0F_77]             Zero Upper bits of YMM registers    ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ FMA ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ vfmadd132pd  VEX.W1[66_0F_38_98]    Fused Multiply-Add of packed F64    ³
+³ vfmadd213pd  VEX.W1[66_0F_38_A8]    Fused Multiply-Add of packed F64    ³
+³ vfmadd231pd  VEX.W1[66_0F_38_B8]    Fused Multiply-Add of packed F64    ³
+³ vfmadd132ps  VEX.W0[66_0F_38_98]    Fused Multiply-Add of packed F32    ³
+³ vfmadd213ps  VEX.W0[66_0F_38_A8]    Fused Multiply-Add of packed F32    ³
+³ vfmadd231ps  VEX.W0[66_0F_38_B8]    Fused Multiply-Add of packed F32    ³
+³ vfmadd132sd  VEX.W1[66_0F_38_99]    Fused Multiply-Add of scalar F64    ³
+³ vfmadd213sd  VEX.W1[66_0F_38_A9]    Fused Multiply-Add of scalar F64    ³
+³ vfmadd231sd  VEX.W1[66_0F_38_B9]    Fused Multiply-Add of scalar F64    ³
+³ vfmadd132ss  VEX.W0[66_0F_38_99]    Fused Multiply-Add of scalar F32    ³
+³ vfmadd213ss  VEX.W0[66_0F_38_A9]    Fused Multiply-Add of scalar F32    ³
+³ vfmadd231ss  VEX.W0[66_0F_38_B9]    Fused Multiply-Add of scalar F32    ³
+³ vfmaddsub132pd VEX.W1[66_0F_38_96]  Fused Multiply-Add/Sub of packed F64³
+³ vfmaddsub213pd VEX.W1[66_0F_38_A6]  Fused Multiply-Add/Sub of packed F64³
+³ vfmaddsub231pd VEX.W1[66_0F_38_B6]  Fused Multiply-Add/Sub of packed F64³
+³ vfmaddsub132ps VEX.W0[66_0F_38_96]  Fused Multiply-Add/Sub of packed F32³
+³ vfmaddsub213ps VEX.W0[66_0F_38_A6]  Fused Multiply-Add/Sub of packed F32³
+³ vfmaddsub231ps VEX.W0[66_0F_38_B6]  Fused Multiply-Add/Sub of packed F32³
+³ vfmsubadd132pd VEX.W1[66_0F_38_97]  Fused Multiply-Sub/Add of packed F64³
+³ vfmsubadd213pd VEX.W1[66_0F_38_A7]  Fused Multiply-Sub/Add of packed F64³
+³ vfmsubadd231pd VEX.W1[66_0F_38_B7]  Fused Multiply-Sub/Add of packed F64³
+³ vfmsubadd132ps VEX.W0[66_0F_38_97]  Fused Multiply-Sub/Add of packed F32³
+³ vfmsubadd213ps VEX.W0[66_0F_38_A7]  Fused Multiply-Sub/Add of packed F32³
+³ vfmsubadd231ps VEX.W0[66_0F_38_B7]  Fused Multiply-Sub/Add of packed F32³
+³ vfmsub132pd  VEX.W1[66_0F_38_9A]    Fused Multiply-Add of packed F64    ³
+³ vfmsub213pd  VEX.W1[66_0F_38_AA]    Fused Multiply-Add of packed F64    ³
+³ vfmsub231pd  VEX.W1[66_0F_38_BA]    Fused Multiply-Add of packed F64    ³
+³ vfmsub132ps  VEX.W0[66_0F_38_9A]    Fused Multiply-Add of packed F32    ³
+³ vfmsub213ps  VEX.W0[66_0F_38_AA]    Fused Multiply-Add of packed F32    ³
+³ vfmsub231ps  VEX.W0[66_0F_38_BA]    Fused Multiply-Add of packed F32    ³
+³ vfmsub132sd  VEX.W1[66_0F_38_9B]    Fused Multiply-Add of scalar F64    ³
+³ vfmsub213sd  VEX.W1[66_0F_38_AB]    Fused Multiply-Add of scalar F64    ³
+³ vfmsub231sd  VEX.W1[66_0F_38_BB]    Fused Multiply-Add of scalar F64    ³
+³ vfmsub132ss  VEX.W0[66_0F_38_9B]    Fused Multiply-Add of scalar F32    ³
+³ vfmsub213ss  VEX.W0[66_0F_38_AB]    Fused Multiply-Add of scalar F32    ³
+³ vfmsub231ss  VEX.W0[66_0F_38_BB]    Fused Multiply-Add of scalar F32    ³
+³ vfnmadd132pd VEX.W1[66_0F_38_9C]    Fused Neg Multiply-Add of packed F64³
+³ vfnmadd213pd VEX.W1[66_0F_38_AC]    Fused Neg Multiply-Add of packed F64³
+³ vfnmadd231pd VEX.W1[66_0F_38_BC]    Fused Neg Multiply-Add of packed F64³
+³ vfnmadd132ps VEX.W0[66_0F_38_9C]    Fused Neg Multiply-Add of packed F32³
+³ vfnmadd213ps VEX.W0[66_0F_38_AC]    Fused Neg Multiply-Add of packed F32³
+³ vfnmadd231ps VEX.W0[66_0F_38_BC]    Fused Neg Multiply-Add of packed F32³
+³ vfnmadd132sd VEX.W1[66_0F_38_9D]    Fused Neg Multiply-Add of scalar F64³
+³ vfnmadd213sd VEX.W1[66_0F_38_AD]    Fused Neg Multiply-Add of scalar F64³
+³ vfnmadd231sd VEX.W1[66_0F_38_BD]    Fused Neg Multiply-Add of scalar F64³
+³ vfnmadd132ss VEX.W0[66_0F_38_9D]    Fused Neg Multiply-Add of scalar F32³
+³ vfnmadd213ss VEX.W0[66_0F_38_AD]    Fused Neg Multiply-Add of scalar F32³
+³ vfnmadd231ss VEX.W0[66_0F_38_BD]    Fused Neg Multiply-Add of scalar F32³
+³ vfnmsub132pd VEX.W1[66_0F_38_9E]    Fused Neg Multiply-Sub of packed F64³
+³ vfnmsub213pd VEX.W1[66_0F_38_AE]    Fused Neg Multiply-Sub of packed F64³
+³ vfnmsub231pd VEX.W1[66_0F_38_BE]    Fused Neg Multiply-Sub of packed F64³
+³ vfnmsub132ps VEX.W0[66_0F_38_9E]    Fused Neg Multiply-Sub of packed F32³
+³ vfnmsub213ps VEX.W0[66_0F_38_AE]    Fused Neg Multiply-Sub of packed F32³
+³ vfnmsub231ps VEX.W0[66_0F_38_BE]    Fused Neg Multiply-Sub of packed F32³
+³ vfnmsub132sd VEX.W1[66_0F_38_9F]    Fused Neg Multiply-Sub of scalar F64³
+³ vfnmsub213sd VEX.W1[66_0F_38_AF]    Fused Neg Multiply-Sub of scalar F64³
+³ vfnmsub231sd VEX.W1[66_0F_38_BF]    Fused Neg Multiply-Sub of scalar F64³
+³ vfnmsub132ss VEX.W0[66_0F_38_9F]    Fused Neg Multiply-Sub of scalar F32³
+³ vfnmsub213ss VEX.W0[66_0F_38_AF]    Fused Neg Multiply-Sub of scalar F32³
+³ vfnmsub231ss VEX.W0[66_0F_38_BF]    Fused Neg Multiply-Sub of scalar F32³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³                     %BBulldozer instruction mnemonics%b                     ³
+³ %BBulldozer%b is the codename %IAMD%i has given to one of the next-generation   ³
+³ CPU cores after the K10 microarchitecture for the company's M-SPACE     ³
+³ design methodology, with the core specifically aimed at 10 watt to 100w ³
+³ TDP computing products. Bulldozer is a completely new design developed  ³
+³ from the ground up. %BBulldozer%b cores will support most of the instruction³
+³ sets currently implemented in Intel processors (including SSE4.1 SSE4.2)³
+³ future Instruction sets announced by Intel (AES, PCLMULQDQ and AVX), as ³
+³ well as future instruction sets proposed by AMD (XOP, FMA4 and CVT16)   ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ %BXOP encoding%b:                                                           ³
+³ %IXOP%i is 8F opcode                                                        ³
+³                   Byte 0         Byte 1             Byte 2              ³
+³  (Bit Position) 7        0   7 6 5 4        0   7 6    3 2 1 0          ³
+³                ÚÄÄÄÄÄÄÄÄÄÄ¿ ÚÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿ ÚÄÂÄÄÄÄÄÄÂÄÂÄÄÄ¿         ³
+³  3-byte XOP 8F ³ 10001111 ³ ³R X B³  m-mmmm  ³ ³W³ vvvv ³L³ pp³         ³
+³                ÀÄÄÄÄÄÄÄÄÄÄÙ ÀÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÙ ÀÄÁÄÄÄÄÄÄÁÄÁÄÄÄÙ         ³
+³                                                                         ³
+³ all fields of XOP prefix have the same meaning as in VEX except:        ³
+³   %Im-mmmm%i:                                                               ³
+³     01000: instruction with immediate byte                              ³
+³     01001: instructionwith no immediate byte                            ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ CVT16 ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ vcvtph2ps    XOP.08[A0]             Convert Packed F16 to F32           ³
+³ vcvtps2ph    XOP.08[A1]             Convert Packed F32 to F16           ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ FMA4 ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ vfmaddpd     VEX[66_0F_3A_69]       Fused Mul and Add Packed F64        ³
+³ vfmaddps     VEX[66_0F_3A_68]       Fused Mul and Add Packed F32        ³
+³ vfmaddsd     VEX[66_0F_3A_6B]       Fused Mul and Add Packed F64        ³
+³ vfmaddss     VEX[66_0F_3A_6A]       Fused Mul and Add Packed F32        ³
+³ vfmaddsubpd  VEX[66_0F_3A_5D]       Fused Mul and Add/Sub Packed F64    ³
+³ vfmaddsubps  VEX[66_0F_3A_5C]       Fused Mul and Add/Sub Packed F32    ³
+³ vfmsubaddpd  VEX[66_0F_3A_5F]       Fused Mul and Sub/Add Packed F64    ³
+³ vfmsubaddps  VEX[66_0F_3A_5E]       Fused Mul and Sub/Add Packed F32    ³
+³ vfmsubpd     VEX[66_0F_3A_6D]       Fused Mul and Sub Packed F64        ³
+³ vfmsubps     VEX[66_0F_3A_6C]       Fused Mul and Sub Packed F32        ³
+³ vfmsubsd     VEX[66_0F_3A_6F]       Fused Mul and Sub Packed F64        ³
+³ vfmsubss     VEX[66_0F_3A_6E]       Fused Mul and Sub Packed F32        ³
+³ vfnmaddpd    VEX[66_0F_3A_79]       Fused Negate Mul and Add Packed F64 ³
+³ vfnmaddps    VEX[66_0F_3A_78]       Fused Negate Mul and Add Packed F32 ³
+³ vfnmaddsd    VEX[66_0F_3A_7B]       Fused Negate Mul and Add Packed F64 ³
+³ vfnmaddss    VEX[66_0F_3A_7A]       Fused Negate Mul and Add Packed F32 ³
+³ vfnmsubpd    VEX[66_0F_3A_7D]       Fused Negate Mul and Sub Packed F64 ³
+³ vfnmsubps    VEX[66_0F_3A_7C]       Fused Negate Mul and Sub Packed F32 ³
+³ vfnmsubsd    VEX[66_0F_3A_7F]       Fused Negate Mul and Sub Packed F64 ³
+³ vfnmsubss    VEX[66_0F_3A_7E]       Fused Negate Mul and Sub Packed F32 ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ XOP ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ vfrczpd      XOP.09[81]             Extract Fraction Packed F64         ³
+³ vfrczps      XOP.09[80]             Extract Fraction Packed F32         ³
+³ vfrczsd      XOP.09[83]             Extract Fraction Scalar F64         ³
+³ vfrczss      XOP.09[82]             Extract Fraction Scalar F32         ³
+³ vpcmov       XOP.08[A2,imm8]        Vector Conditional Moves            ³
+³ vpcomb       XOP.08[CC,imm8]        Compare Vector S8                   ³
+³ vpcomd       XOP.08[CE,imm8]        Compare Vector S32                  ³
+³ vpcomq       XOP.08[CF,imm8]        Compare Vector S64                  ³
+³ vpcomw       XOP.08[CD,imm8]        Compare Vector S16                  ³
+³ vpcomub      XOP.08[EC,imm8]        Compare Vector U8                   ³
+³ vpcomud      XOP.08[EE,imm8]        Compare Vector U32                  ³
+³ vpcomuq      XOP.08[EF,imm8]        Compare Vector U64                  ³
+³ vpcomuw      XOP.08[ED,imm8]        Compare Vector U16                  ³
+³ vphaddbd     XOP.09[C2]             Packed Horizontal Add S8 to S32     ³
+³ vphaddbq     XOP.09[C3]             Packed Horizontal Add S8 to S64     ³
+³ vphaddbw     XOP.09[C1]             Packed Horizontal Add S8 to S16     ³
+³ vphadddq     XOP.09[CB]             Packed Horizontal Add S32 to S64    ³
+³ vphaddubd    XOP.09[D2]             Packed Horizontal Add U8 to U32     ³
+³ vphaddubq    XOP.09[D3]             Packed Horizontal Add U8 to U64     ³
+³ vphaddubw    XOP.09[D1]             Packed Horizontal Add U8 to U16     ³
+³ vphaddudq    XOP.09[D8]             Packed Horizontal Add U32 to U64    ³
+³ vphadduwd    XOP.09[D6]             Packed Horizontal Add U16 to U32    ³
+³ vphadduwq    XOP.09[D7]             Packed Horizontal Add U16 to U64    ³
+³ vphaddwd     XOP.09[C6]             Packed Horizontal Add S16 to S32    ³
+³ vphaddwq     XOP.09[C7]             Packed Horizontal Add S16 to S64    ³
+³ vphsubbw     XOP.09[E1]             Packed Horizontal Subtract S8 to S16³
+³ vphsubdq     XOP.09[E3]             Packed Horizontal Subtract S32to S64³
+³ vphsubwd     XOP.09[E2]             Packed Horizontal Subtract S16to S32³
+³ vpmacsdd     XOP.08[9E]             Packed Multiply Accumulate S32to S32³
+³ vpmacsdqh    XOP.08[9F]             Packed Multiply Acc high S32 to S64 ³
+³ vpmacsdql    XOP.08[97]             Packed Multiply Acc low  S32 to S64 ³
+³ vpmacssdd    XOP.08[8E]             Packed Multiply Acc S32 to S32 w sat³
+³ vpmacssdqh   XOP.08[8F]             Packed Multiply Acc h S32 to S64 w s³
+³ vpmacssdql   XOP.08[87]             Packed Multiply Acc l S32 to S64 w s³
+³ vpmacsswd    XOP.08[86]             Packed Multiply Acc S16 to S32 w sat³
+³ vpmacssww    XOP.08[85]             Packed Multiply Acc S16 to S16 w sat³
+³ vpmacswd     XOP.08[96]             Packed Multiply Acc S16 to S32      ³
+³ vpmacsww     XOP.08[95]             Packed Multiply Acc S16 to S16      ³
+³ vpmadcsswd   XOP.08[A6]             Packed Mul,Add & Acc S16 to S32  sat³
+³ vpmadcswd    XOP.08[B6]             Packed Mul,Add & Acc S16 to S32     ³
+³ vperm        XOP.08[A3,imm4]        Packed Permule                      ³
+³ vprotb       XOP.09[90];.08[C0]     Packed Rotate U8                    ³
+³ vprotd       XOP.09[92];.08[C2]     Packed Rotate U32                   ³
+³ vprotq       XOP.09[93];.08[C3]     Packed Rotate U64                   ³
+³ vprotw       XOP.09[91];.08[C1]     Packed Rotate U16                   ³
+³ vpshab       XOP.09[98]             Packed Shift Right Arith S8         ³
+³ vpshad       XOP.09[9A]             Packed Shift Right Arith S32        ³
+³ vpshaq       XOP.09[9B]             Packed Shift Right Arith S64        ³
+³ vpshaw       XOP.09[99]             Packed Shift Right Arith S16        ³
+³ vpshab       XOP.09[94]             Packed Shift Right Logical U8       ³
+³ vpshad       XOP.09[96]             Packed Shift Right Logical U32      ³
+³ vpshaq       XOP.09[97]             Packed Shift Right Logical U64      ³
+³ vpshaw       XOP.09[95]             Packed Shift Right Logical U16      ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ

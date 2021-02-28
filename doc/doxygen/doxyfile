@@ -4,7 +4,7 @@
 # Project related configuration options
 #---------------------------------------------------------------------------
 DOXYFILE_ENCODING      = UTF-8
-PROJECT_NAME           = "BEYE [Binary EYE project]"
+PROJECT_NAME           = "BIEW [Binary vIEW project]"
 PROJECT_NUMBER         = 5.6.4
 OUTPUT_DIRECTORY       = ./out
 CREATE_SUBDIRS         = YES

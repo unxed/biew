@@ -1,0 +1,48 @@
+                          How to compile
+                          ==============
+
+Compilation of the project is enough simple task. All waht you need to do
+for that is executing configure script and change config.mak with preferable
+values of some variables if you need that.
+
+To get list of arguments of configure script executte this command:
+./configure --help
+
+after that you need to run make command:
+make all install
+
+Compilation of installing at one line:
+
+Run: './configure; make; make install'
+
+
+Other makefiles
+---------------
+
+  Makefiles for non GNU development system are located  in  'mk_files'
+subfolder. In general, they  are  always  workable.  As  a  rule  they
+contain instructions for execution of correspondent make utility.
+
+Example:
+
+File makefile.wc is designed for Watcom C/C++.  Copy  this  file  into
+base folder  of  the  project.  After  that  modify  one  variable  of
+makefile:
+
+TARGET=
+
+to preferred value, which is listed above. Last thing that  is  needed
+- type command (as described in makefile.wc):
+
+wmake /ms /f makefile.wc
+
+If your Watcom compiler is correctly installed,  you  will  get  right
+result.
+
+
+Other binaries of the distribution
+----------------------------------
+
+All additional binaries and text files required for  the  project  are
+located in the 'bin_rc' subfolder. They work on any  platform  without
+modification or recompilation.

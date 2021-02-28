@@ -1,5 +1,5 @@
 /*
-   This is a simple program that allows you to reverse any beye's xlt files.
+   This is a simple program that allows you to reverse any biew's xlt files.
    (To build vice-versa of file).
    Licence: Public domain.
 */
@@ -18,7 +18,7 @@ void main( void )
     fseek(in, 0x40, SEEK_SET);
     fread(in_t,  256,  1, in);
     for(i = 0;i < 256;i++)  ou_t[in_t[i]] = i;
-    fwrite("Beye Xlat Table.", 16, 1, out);
+    fwrite("Biew Xlat Table.", 16, 1, out);
     fwrite("<-- Your description here                    -->", 48, 1, out);
     fwrite(ou_t, 256, 1,  out);
   }

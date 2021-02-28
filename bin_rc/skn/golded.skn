@@ -1,5 +1,5 @@
 ;
-; "GoldEd" BEYE skin by Konstantin Boldyshev
+; "GoldEd" BIEW skin by Konstantin Boldyshev
 ; 
 ; $Id: golded.skn,v 1.5 2009/11/12 10:45:29 nickols_k Exp $
 
@@ -43,11 +43,11 @@
     Main         = Black:White     ; multiline editor
     Change       = Black:LightRed  ; when undo buffer is not same with editor
     Selected     = LightGray:Blue ; for future: when buffer is selected
-[ Prompt ] ; Lower string of BEYE
+[ Prompt ] ; Lower string of BIEW
   Button       = Blue:White       ; Color of buttons
   Digit        = Blue:LightGray  ; Color of digits
   Control      = Blue:Yellow  ; Lower left corner of screen
-[ Title ]  ; Upper string of BEYE
+[ Title ]  ; Upper string of BIEW
   Main         = Blue:White
   Change       = Blue:Yellow
 [ Text ]   ; HighLight text support (still for textmode)

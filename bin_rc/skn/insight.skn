@@ -1,5 +1,5 @@
 ;
-; "Insight theme" (not AFD) BEYE skin by Nickols_K
+; "Insight theme" (not AFD) BIEW skin by Nickols_K
 ;
 [ Skin info ]
  Name = Insight theme
@@ -41,11 +41,11 @@
     Main         = Black:White     ; multiline editor
     Change       = Black:LightRed  ; when undo buffer is not same with editor
     Selected     = LightGray:Black ; for future: when buffer is selected
-[ Prompt ] ; Lower string of BEYE
+[ Prompt ] ; Lower string of BIEW
   Button       = LightGray:Black        ; Color of buttons
   Digit        = LightGray:Red	        ; Color of digits
   Control      = LightGray:Blue        ; Lower left corner of screen
-[ Title ]  ; Upper string of BEYE
+[ Title ]  ; Upper string of BIEW
   Main         = LightGray:Black
   Change       = LightGray:Red
 [ Text ]   ; HighLight text support (still for textmode)

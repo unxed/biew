@@ -1,5 +1,5 @@
 ##############################################################################
-#   MAKEFILE - this file is part of Binary EYE project (BEYE)                #
+#   MAKEFILE - this file is part of Binary vIEW project (BIEW)               #
 ##############################################################################
 #   Copyrights:           2000 Nickols_K                                     #
 #   License:              See below                                          #
@@ -8,13 +8,13 @@
 ####################### [ D e s c r i p t i o n ] ############################
 #  This file is script for make utility of Watcom development system.        #
 ########################### [ L i c e n c e ] ################################
-# The Binary EYE (BEYE) is copyright (C) 1995 Nickols_K.                     #
+# The Binary vIEW (BIEW) is copyright (C) 1995 Nickols_K.                    #
 # All rights reserved.                                                       #
 # This software is redistributable under the licence given in the file       #
-# "Licence" distributed in the BEYE archive.                                 #
+# "Licence" distributed in the BIEW archive.                                 #
 ##############################################################################
 # How to run this file:
-# Copy it into base BEYE folder (../)
+# Copy it into base BIEW folder (../)
 # and type: wmake /ms /f makefile.wc
 #-----------------------------------------------------------------------------
 # TARGET is one of: dos4gw os2 win32
@@ -107,12 +107,12 @@ LD=wlink.exe
 #
 # List of objects that needed for project
 #
-BEYEOBJS = &
+BIEWOBJS = &
 addendum.obj &
 bconsole.obj &
-beye.obj &
-beyehelp.obj &
-beyeutil.obj &
+biew.obj &
+biewhelp.obj &
+biewutil.obj &
 bin_util.obj &
 bmfile.obj &
 codeguid.obj &
@@ -164,7 +164,7 @@ ix86.obj &
 ix86_fpu.obj &
 ix86_fun.obj &
 bbio.obj &
-libbeye.obj &
+biewlib.obj &
 file_ini.obj &
 pmalloc.obj &
 twin.obj &
@@ -209,12 +209,12 @@ vio.obj
 #     .<dependent_extension>.<target_extension>:
 #             <command_list>
 #
-beye.exe: beye.lnk
+biew.exe: biew.lnk
 	$(LD) $(LDFLAGS) NAME $@ @$^*
 
-beye.lnk: $(BEYEOBJS)
+biew.lnk: $(BIEWOBJS)
 	%create $^@
-	for %i in ($(BEYEOBJS)) do @%append $^@ FILE %i
+	for %i in ($(BIEWOBJS)) do @%append $^@ FILE %i
 
 
 #
@@ -224,9 +224,9 @@ beye.lnk: $(BEYEOBJS)
 # In short: target is not a file.
 #
 clean: .SYMBOLIC
-	del $(BEYEOBJS)
-	del beye.exe
-        del beye.lnk
+	del $(BIEWOBJS)
+	del biew.exe
+        del biew.lnk
 	del *.map
         del *.err
 #
@@ -244,10 +244,10 @@ plugins\disasm;&
 plugins\disasm\avr;&
 plugins\disasm\java;&
 plugins\disasm\ix86;&
-libbeye;&
-libbeye\sysdep;&
-libbeye\sysdep\$(MACHINE);&
-libbeye\sysdep\$(MACHINE)\$(HOST)
+biewlib;&
+biewlib\sysdep;&
+biewlib\sysdep\$(MACHINE);&
+biewlib\sysdep\$(MACHINE)\$(HOST)
 #
 # Implicit rules are used if a file has not been declared as a target in any
 # explicit rule or the file has been declared as a target in an explicit rule

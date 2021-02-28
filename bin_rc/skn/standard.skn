@@ -1,5 +1,5 @@
 ;
-; This file contains standard BEYE skin.
+; This file contains standard BIEW skin.
 ;
 [ Skin info ]
  Name = Standard skin ; Will displayed in color addons
@@ -24,7 +24,7 @@
   White        = 15
 [ Terminal ]
 ; Here is list of colors that would be transparent if it supported by terminal.
-; Note: for native console versions of BEYE it section is meaningless.
+; Note: for native console versions of BIEW it section is meaningless.
   Trans1       = Black
   Trans2       = Blue
   Trans3       =
@@ -33,9 +33,9 @@
   Trans6       =
   Trans7       =
   Trans8       =
-; Below placed colors of windows and window elements of BEYE.
+; Below placed colors of windows and window elements of BIEW.
 ; Color gives as pair - background:foreground.
-[ Browser ] ; Main window of BEYE
+[ Browser ] ; Main window of BIEW
   Main         = Blue:LightCyan
   Bound        = Blue:Yellow      ; bound color (symbols: '<' '>' if text is outside the window)
   HighLight    = LightGray:Black  ; color of hihglighting search
@@ -47,11 +47,11 @@
     Main         = Blue:White     ; multiline editor
     Change       = Blue:LightRed  ; when undo buffer is not same with editor
     Selected     = LightGray:Blue ; for future: when buffer is selected
-[ Prompt ] ; Lower string of BEYE
+[ Prompt ] ; Lower string of BIEW
   Button       = Cyan:Black       ; Color of buttons
   Digit        = Black:LightCyan  ; Color of digits
   Control      = Black:LightGray  ; Lower left corner of screen
-[ Title ]  ; Upper string of BEYE
+[ Title ]  ; Upper string of BIEW
   Main         = Cyan:Black
   Change       = Cyan:Red
 [ Text ]   ; HighLight text support (still for textmode)

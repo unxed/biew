@@ -2,12 +2,12 @@
 
 %BConcept%b
 
-%IF1-F10%i   - Basic functions of BEYE, basically for switching modes.
+%IF1-F10%i   - Basic functions of BIEW, basically for switching modes.
 
-%IShiftF1-%i - Help functions of BEYE, for calling service utilities.
+%IShiftF1-%i - Help functions of BIEW, for calling service utilities.
 %IShiftF10%i
 
-%IAltF1-%i   - Defined by executable module fragment of BEYE.
+%IAltF1-%i   - Defined by executable module fragment of BIEW.
 %IAltF10%i     (PE, NE, ELF, etc.)
 
 %ICtrlF1-%i  - Defined by current view mode
@@ -133,7 +133,7 @@ All other keys have function defined by internal structure of module.
 %ICtrl-O%i - Review the last screen. This allows  you  to  see  again  the
          output produced by the last program executed.
 
-%UUNIX specific features of BEYE:%u
+%UUNIX specific features of BIEW:%u
 
 Key modifiers are mapped as:
 

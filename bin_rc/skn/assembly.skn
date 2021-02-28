@@ -1,5 +1,5 @@
 ;
-; "Assembly Fun" BEYE skin by Konstantin Boldyshev
+; "Assembly Fun" BIEW skin by Konstantin Boldyshev
 ;
 ; $Id: assembly.skn,v 1.5 2009/11/12 10:45:29 nickols_k Exp $
 
@@ -43,11 +43,11 @@
     Main         = Blue:White     ; multiline editor
     Change       = Blue:LightRed  ; when undo buffer is not same with editor
     Selected     = LightGray:Blue ; for future: when buffer is selected
-[ Prompt ] ; Lower string of BEYE
+[ Prompt ] ; Lower string of BIEW
   Button       = LightGray:Black       ; Color of buttons
   Digit        = Black:Yellow  ; Color of digits
   Control      = Black:Gray  ; Lower left corner of screen
-[ Title ]  ; Upper string of BEYE
+[ Title ]  ; Upper string of BIEW
   Main         = LightGray:Black
   Change       = LightGray:Red
 [ Text ]   ; HighLight text support (still for textmode)
