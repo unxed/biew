@@ -1,5 +1,5 @@
 /**
- * @namespace	usr
+ * @namespace   beye
  * @file        editor.h
  * @brief       This file contains editing function prototypes.
  * @version     -
@@ -17,50 +17,44 @@
 #ifndef __EDITOR__H
 #define __EDITOR__H
 
-#include "libbeye/libbeye.h"
+#ifndef __TWIN_H
+#include "libbeye/twin.h"
+#endif
 
-namespace	usr {
-    class TWindow;
-    struct editor_mem {
-	unsigned char *buff;
-	unsigned char *save;
-	unsigned char *alen;
-	unsigned       size;
-	unsigned       width;
-    };
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-    class Editor : public Opaque {
-	public:
-	    Editor(BeyeContext& bc,TWindow& enwd,unsigned width);
-	    Editor(BeyeContext& bc,TWindow& enwd,unsigned width,const unsigned char *buff,unsigned size);
-	    virtual ~Editor();
+struct tag_emem
+{
+  unsigned char *buff;
+  unsigned char *save;
+  unsigned char *alen;
+  unsigned       size;
+  unsigned       width;
+};
 
-	    virtual int		run(TWindow* hexwnd=NULL);
-	    virtual bool	default_navigation(int _lastbyte);
-	    virtual bool	default_action(int _lastbyte);
-	    virtual void	goto_xy(unsigned x,unsigned y);
-	    virtual unsigned	where_x() const;
-	    virtual unsigned	where_y() const;
-	    virtual const editor_mem&	get_mem() const;
-	    virtual editor_mem&	get_mem();
-	    virtual uint8_t	get_template() const;
-	    virtual __fileoff_t	tell() const;
-	    virtual void	CheckBounds();
-	    virtual void	CheckYBounds();
-	    virtual void	CheckXYBounds();
-	    virtual void	save_context(__fileoff_t cp);
-	    virtual void	paint_title(int shift,__fileoff_t cp,bool use_shift) const;
-	    virtual void	show_help() const;
-	private:
-	    void		init(unsigned width,const unsigned char *buff,unsigned size);
+extern struct tag_emem EditorMem;
 
-	    BeyeContext&	bctx;
-	    editor_mem		EditorMem;
-	    int			edit_x,edit_y;
-	    __fileoff_t		edit_cp;
-	    uint8_t		edit_XX;
-	    TWindow&		ewnd;
-    };
+extern int edit_x,edit_y;
+extern unsigned char edit_XX;
+extern __fileoff_t edit_cp;
 
-} // namespace	usr
+
+extern void   __FASTCALL__ PaintETitle( int shift,tBool use_shift );
+extern void   __FASTCALL__ CheckBounds( void );
+extern void   __FASTCALL__ CheckYBounds( void );
+extern void   __FASTCALL__ CheckXYBounds( void );
+extern tBool  __FASTCALL__ edit_defaction(int _lastbyte);
+extern void   __FASTCALL__ editSaveContest( void );
+extern tBool  __FASTCALL__ editDefAction(int _lastbyte);
+extern int    __FASTCALL__ FullEdit(TWindow * txtwnd,void (*save)(unsigned char *,unsigned));
+extern tBool  __FASTCALL__ editInitBuffs(unsigned width,unsigned char *buff,unsigned size);
+extern void   __FASTCALL__ editDestroyBuffs( void );
+
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

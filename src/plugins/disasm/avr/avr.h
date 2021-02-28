@@ -1,5 +1,5 @@
 /**
- * @namespace	usr_plugins_II
+ * @namespace   beye_plugins_II
  * @file        plugins/disasm/avr/avr_ops.h
  * @brief       This file contains declaration of Atmel AVR opcodes.
  * @version     -
@@ -94,7 +94,7 @@
    i - immediate value
    l - signed pc relative offset from -64 to 63
    L - signed pc relative offset from -2048 to 2047
-   h - full code address (call, jmp)
+   h - absolute code address (call, jmp)
    S - immediate value from 0 to 7 (S = s << 4)
    ? - use this opcode entry if no parameters, else use next opcode entry
 
@@ -269,3 +269,4 @@ AVR_INSN (st,   "e,r", "100!001rrrrree-+", 1, AVR_ISA_1200, 0x8200)
       (>128K program memory, PC = EIND:Z).  */
 AVR_INSN (eicall, "",  "1001010100011001", 1, AVR_ISA_EIND, 0x9519)
 AVR_INSN (eijmp, "",   "1001010000011001", 1, AVR_ISA_EIND, 0x9419)
+

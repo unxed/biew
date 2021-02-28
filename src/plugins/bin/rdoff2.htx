@@ -1,4 +1,4 @@
- Relocatable Dynamic Object File Format V2
+ Relocatable Dynamic Object File Format V2 
 %BRDOFF is a relocatable object file  format%b  whose  design  goals  were
 mainly to keep it simple, so that an RDOFF object can  be  loaded  and
 executed by a very small piece of code (primarily so that  it  can  be

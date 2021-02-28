@@ -242,9 +242,9 @@ CtrlF10    (bin, text, hex, disasm).
        and [CtrlBkSpace] - restore original values of  modified  byte.
        In text mode this key (F4) switches Wrap/Unwrap modes.
   F5 - Goto. Moves current file pointer on given offset:
-        - from start of file.
-        - from current position.
-        - to virtual address.
+        - from start of file (ABSOLUTE mode).
+        - from current position (RELATIVE mode).
+        - to virtual address (VIRTUAL mode).
   F6 - Reread file.
   F7 - Search. Offers to  input  sequence  up  to  20  characters  and
        searches  for  it.  If  given  sequence  exists  then   program
@@ -313,10 +313,10 @@ All other keys have function defined by internal structure of module.
   CtrlF2 - Select "submode" of view
   CtrlF6 -  Address  Resolution  (Resolving)  -  in  hex/disasm  modes
            controls details of address in left  column.  Will  display
-           file  offset  from  beginning  of  the  file   or  relative
-           offset from  beginning  of  the  block/segment  of  current
-           binary format with the name of  block/segment.  All   other
-           keys are defined by selected mode.
+           absolute  file  offset  from  beginning  of  the  file   or
+           relative offset from  beginning  of  the  block/segment  of
+           current binary format with the name of  block/segment.  All
+           other keys are defined by selected mode.
 
   Note: you can jump on points  in  tables  or  lists  highlighted  by
         black background by pressing [ENTER].

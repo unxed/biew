@@ -1,5 +1,5 @@
 /**
- * @namespace	usr_plugins_auto
+ * @namespace   beye_plugins_auto
  * @file        plugins/bin/aout64.h
  * @brief       This file contains `a.out' object-file definitions, including
  *              extensions to 64-bit fields.
@@ -26,12 +26,14 @@
 #ifndef __A_OUT_64_H__
 #define __A_OUT_64_H__
 
-#include "config.h"
+#ifndef __SYS_DEP_H
+#include "_sys_dep.h"
+#endif
 
-namespace	usr {
 #ifdef __HAVE_PRAGMA_PACK__
 #pragma pack(1)
 #endif
+
 /** This is the layout on disk of the 32-bit or 64-bit exec header. */
 
 #define BYTES_IN_WORD 4
@@ -42,44 +44,47 @@ namespace	usr {
 #ifndef external_exec
 struct external_exec
 {
-  uint8_t e_info[4];		/**< magic number and stuff		*/
-  uint8_t e_text[BYTES_IN_WORD]; /**< length of text section in bytes	*/
-  uint8_t e_data[BYTES_IN_WORD]; /**< length of data section in bytes	*/
-  uint8_t e_bss[BYTES_IN_WORD]; /**< length of bss area in bytes 		*/
-  uint8_t e_syms[BYTES_IN_WORD]; /**< length of symbol table in bytes 	*/
-  uint8_t e_entry[BYTES_IN_WORD]; /**< start address 			*/
-  uint8_t e_trsize[BYTES_IN_WORD]; /**< length of text relocation info	*/
-  uint8_t e_drsize[BYTES_IN_WORD]; /**< length of data relocation info 	*/
+  tUInt8 e_info[4];		/**< magic number and stuff		*/
+  tUInt8 e_text[BYTES_IN_WORD]; /**< length of text section in bytes	*/
+  tUInt8 e_data[BYTES_IN_WORD]; /**< length of data section in bytes	*/
+  tUInt8 e_bss[BYTES_IN_WORD]; /**< length of bss area in bytes 		*/
+  tUInt8 e_syms[BYTES_IN_WORD]; /**< length of symbol table in bytes 	*/
+  tUInt8 e_entry[BYTES_IN_WORD]; /**< start address 			*/
+  tUInt8 e_trsize[BYTES_IN_WORD]; /**< length of text relocation info	*/
+  tUInt8 e_drsize[BYTES_IN_WORD]; /**< length of data relocation info 	*/
 };
 
-enum {
-    EXEC_BYTES_SIZE	=(4 + BYTES_IN_WORD * 7),
+#define	EXEC_BYTES_SIZE	(4 + BYTES_IN_WORD * 7)
+
 /** Magic numbers for a.out files */
-    OMAGIC64		=0x1001,		/**< Code indicating object file  */
-    ZMAGIC64		=0x1002,		/**< Code indicating demand-paged executable.  */
-    NMAGIC64		=0x1003			/**< Code indicating pure executable.  */
-};
+
+#define OMAGIC64 0x1001		/**< Code indicating object file  */
+#define ZMAGIC64 0x1002		/**< Code indicating demand-paged executable.  */
+#define NMAGIC64 0x1003		/**< Code indicating pure executable.  */
+
 /* There is no 64-bit QMAGIC as far as I know.  */
 
 #define N_BADMAG64(x)	  (N_MAGIC(x) != OMAGIC64	\
 			&& N_MAGIC(x) != NMAGIC64	\
-			&& N_MAGIC(x) != ZMAGIC64)
+  			&& N_MAGIC(x) != ZMAGIC64)
 
-enum {
-    OMAGIC=0x0107,		/**< ...object file or impure executable.  */
-    NMAGIC=0x0108,		/**< Code indicating pure executable.  */
-    ZMAGIC=0x010B,		/**< Code indicating demand-paged executable.  */
-    BMAGIC=0x010D,		/**< Used by a b.out object.  */
-    CMAGIC=0x0111,		/**< Code indicating core file.  */
-    QMAGIC=0x00CC
-};
+#define OMAGIC 0x0107		/**< ...object file or impure executable.  */
+#define NMAGIC 0x0108		/**< Code indicating pure executable.  */
+#define ZMAGIC 0x010B		/**< Code indicating demand-paged executable.  */
+#define BMAGIC 0x010D		/**< Used by a b.out object.  */
+
+#define CMAGIC 0x0111		/**< Code indicating core file.  */
+
 /** This indicates a demand-paged executable with the header in the text.
     It is used by 386BSD (and variants) and Linux, at least.  */
+#ifndef QMAGIC
+#define QMAGIC 0x00CC
+#endif
 # ifndef N_BADMAG
 #  define N_BADMAG(x)	  (N_MAGIC(x) != OMAGIC	\
 			&& N_MAGIC(x) != NMAGIC	\
-			&& N_MAGIC(x) != ZMAGIC \
-			&& N_MAGIC(x) != QMAGIC)
+  			&& N_MAGIC(x) != ZMAGIC \
+		        && N_MAGIC(x) != QMAGIC)
 # endif /* N_BADMAG */
 
 #endif
@@ -267,41 +272,42 @@ enum {
 /** Symbols */
 #ifndef external_nlist
 struct external_nlist {
-  uint8_t e_strx[BYTES_IN_WORD];	/**< index into string table of name */
-  uint8_t e_type[1];			/**< type of symbol */
-  uint8_t e_other[1];			/**< misc info (usually empty) */
-  uint8_t e_desc[2];			/**< description field */
-  uint8_t e_value[BYTES_IN_WORD];	/**< value of symbol */
+  tUInt8 e_strx[BYTES_IN_WORD];	/**< index into string table of name */
+  tUInt8 e_type[1];			/**< type of symbol */
+  tUInt8 e_other[1];			/**< misc info (usually empty) */
+  tUInt8 e_desc[2];			/**< description field */
+  tUInt8 e_value[BYTES_IN_WORD];	/**< value of symbol */
 };
 #define EXTERNAL_NLIST_SIZE (BYTES_IN_WORD+4+BYTES_IN_WORD)
 #endif
 
 struct internal_nlist {
-  uint32_t  n_strx;			/**< index into string table of name */
-  uint8_t   n_type;			/**< type of symbol */
-  uint8_t   n_other;		        /**< misc info (usually empty) */
-  uint16_t  n_desc;		        /**< description field */
-  uint32_t  n_value;			/**< value of symbol */
+  tUInt32  n_strx;			/**< index into string table of name */
+  tUInt8   n_type;			/**< type of symbol */
+  tUInt8   n_other;		        /**< misc info (usually empty) */
+  tUInt16  n_desc;		        /**< description field */
+  tUInt32  n_value;			/**< value of symbol */
 };
 
 /** The n_type field is the symbol type, containing:  */
-enum {
-    N_UNDF	=0,	/**< Undefined symbol */
-    N_ABS 	=2,	/**< Abs symbol -- defined at particular addr */
-    N_TEXT 	=4,	/**< Text sym -- defined at offset in text seg */
-    N_DATA 	=6,	/**< Data sym -- defined at offset in data seg */
-    N_BSS 	=8,	/**< BSS  sym -- defined at offset in zero'd seg */
-    N_COMM	=0x12,	/**< Common symbol (visible after shared lib dynlink) */
-    N_FN	=0x1f,	/**< File name of .o file */
-    N_FN_SEQ	=0x0C,	/**< N_FN from Sequent compilers (sigh) */
+
+#define N_UNDF	0	/**< Undefined symbol */
+#define N_ABS 	2	/**< Absolute symbol -- defined at particular addr */
+#define N_TEXT 	4	/**< Text sym -- defined at offset in text seg */
+#define N_DATA 	6	/**< Data sym -- defined at offset in data seg */
+#define N_BSS 	8	/**< BSS  sym -- defined at offset in zero'd seg */
+#define	N_COMM	0x12	/**< Common symbol (visible after shared lib dynlink) */
+#define N_FN	0x1f	/**< File name of .o file */
+#define	N_FN_SEQ 0x0C	/**< N_FN from Sequent compilers (sigh) */
 /** Note: N_EXT can only be usefully OR-ed with N_UNDF, N_ABS, N_TEXT,
    N_DATA, or N_BSS.  When the low-order bit of other types is set,
    (e.g. N_WARNING versus N_FN), they are two different types.  */
-    N_EXT	=1,	/**< External symbol (as opposed to local-to-this-file) */
-    N_TYPE	=0x1e,
-    N_STAB	=0xe0,	/**< If any of these bits are on, it's a debug symbol */
+#define N_EXT 	1	/**< External symbol (as opposed to local-to-this-file) */
+#define N_TYPE  0x1e
+#define N_STAB 	0xe0	/**< If any of these bits are on, it's a debug symbol */
 
-    N_INDR	=0x0a,
+#define N_INDR 0x0a
+
 /** The following symbols refer to set elements.
    All the N_SET[ATDB] symbols with the same name form one set.
    Space is allocated for the set in the text section, and each set
@@ -314,31 +320,30 @@ enum {
    in that it can satisfy undefined external references.  */
 
 /** These appear as input to LD, in a .o file.  */
-    N_SETA	=0x14,		/**< Abs set element symbol */
-    N_SETT	=0x16,		/**< Text set element symbol */
-    N_SETD	=0x18,		/**< Data set element symbol */
-    N_SETB	=0x1A,		/**< Bss set element symbol */
+#define	N_SETA	0x14		/**< Absolute set element symbol */
+#define	N_SETT	0x16		/**< Text set element symbol */
+#define	N_SETD	0x18		/**< Data set element symbol */
+#define	N_SETB	0x1A		/**< Bss set element symbol */
 
 /** This is output from LD.  */
-    N_SETV	=0x1C,		/**< Pointer to set vector in data area.  */
+#define N_SETV	0x1C		/**< Pointer to set vector in data area.  */
 
 /** Warning symbol. The text gives a warning message, the next symbol
    in the table will be undefined. When the symbol is referenced, the
    message is printed.  */
 
-    N_WARNING	=0x1e,
+#define	N_WARNING 0x1e
 
 /** Weak symbols.  These are a GNU extension to the a.out format.  The
    semantics are those of ELF weak symbols.  Weak symbols are always
    externally visible.  The N_WEAK? values are squeezed into the
    available slots.  The value of a N_WEAKU symbol is 0.  The values
    of the other types are the definitions.  */
-    N_WEAKU	=0x0d,		/**< Weak undefined symbol.  */
-    N_WEAKA	=0x0e,		/**< Weak abs symbol.  */
-    N_WEAKT	=0x0f,		/**< Weak text symbol.  */
-    N_WEAKD	=0x10,		/**< Weak data symbol.  */
-    N_WEAKB	=0x11		/**< Weak bss symbol.  */
-};
+#define N_WEAKU	0x0d		/**< Weak undefined symbol.  */
+#define N_WEAKA 0x0e		/**< Weak absolute symbol.  */
+#define N_WEAKT 0x0f		/**< Weak text symbol.  */
+#define N_WEAKD 0x10		/**< Weak data symbol.  */
+#define N_WEAKB 0x11		/**< Weak bss symbol.  */
 
 /** Relocations
 
@@ -358,56 +363,53 @@ enum {
    Likewise, the data-relocation section applies to the data section.  */
 
 struct reloc_std_external {
-  uint8_t r_address[BYTES_IN_WORD];	/**< offset of of data to relocate 	*/
-  uint8_t r_index[3];	/**< symbol table index of symbol 	*/
-  uint8_t r_type[1];	/**< relocation type			*/
+  tUInt8 r_address[BYTES_IN_WORD];	/**< offset of of data to relocate 	*/
+  tUInt8 r_index[3];	/**< symbol table index of symbol 	*/
+  tUInt8 r_type[1];	/**< relocation type			*/
 };
 
-enum {
-    RELOC_STD_BITS_PCREL_BIG	=((unsigned int) 0x80),
-    RELOC_STD_BITS_PCREL_LITTLE	=((unsigned int) 0x01),
+#define	RELOC_STD_BITS_PCREL_BIG	((unsigned int) 0x80)
+#define	RELOC_STD_BITS_PCREL_LITTLE	((unsigned int) 0x01)
 
-    RELOC_STD_BITS_LENGTH_BIG	=((unsigned int) 0x60),
-    RELOC_STD_BITS_LENGTH_SH_BIG=5,
-    RELOC_STD_BITS_LENGTH_LITTLE=((unsigned int) 0x06),
-    RELOC_STD_BITS_LENGTH_SH_LITTLE=1,
+#define	RELOC_STD_BITS_LENGTH_BIG	((unsigned int) 0x60)
+#define	RELOC_STD_BITS_LENGTH_SH_BIG	5
+#define	RELOC_STD_BITS_LENGTH_LITTLE	((unsigned int) 0x06)
+#define	RELOC_STD_BITS_LENGTH_SH_LITTLE	1
 
-    RELOC_STD_BITS_EXTERN_BIG	=((unsigned int) 0x10),
-    RELOC_STD_BITS_EXTERN_LITTLE=((unsigned int) 0x08),
+#define	RELOC_STD_BITS_EXTERN_BIG	((unsigned int) 0x10)
+#define	RELOC_STD_BITS_EXTERN_LITTLE	((unsigned int) 0x08)
 
-    RELOC_STD_BITS_BASEREL_BIG	=((unsigned int) 0x08),
-    RELOC_STD_BITS_BASEREL_LITTLE=((unsigned int) 0x10),
+#define	RELOC_STD_BITS_BASEREL_BIG	((unsigned int) 0x08)
+#define	RELOC_STD_BITS_BASEREL_LITTLE	((unsigned int) 0x10)
 
-    RELOC_STD_BITS_JMPTABLE_BIG	=((unsigned int) 0x04),
-    RELOC_STD_BITS_JMPTABLE_LITTLE=((unsigned int) 0x20),
+#define	RELOC_STD_BITS_JMPTABLE_BIG	((unsigned int) 0x04)
+#define	RELOC_STD_BITS_JMPTABLE_LITTLE	((unsigned int) 0x20)
 
-    RELOC_STD_BITS_RELATIVE_BIG	=((unsigned int) 0x02),
-    RELOC_STD_BITS_RELATIVE_LITTLE=((unsigned int) 0x40),
+#define	RELOC_STD_BITS_RELATIVE_BIG	((unsigned int) 0x02)
+#define	RELOC_STD_BITS_RELATIVE_LITTLE	((unsigned int) 0x40)
 
-    RELOC_STD_SIZE		=(BYTES_IN_WORD + 3 + 1)		/**< Bytes per relocation entry */
-};
+#define	RELOC_STD_SIZE	(BYTES_IN_WORD + 3 + 1)		/**< Bytes per relocation entry */
+
 
 /** EXTENDED RELOCS  */
 
 struct reloc_ext_external {
-  uint8_t r_address[BYTES_IN_WORD];	/**< offset of of data to relocate 	*/
-  uint8_t r_index[3];	/**< symbol table index of symbol 	*/
-  uint8_t r_type[1];	/**< relocation type			*/
-  uint8_t r_addend[BYTES_IN_WORD];	/**< datum addend				*/
+  tUInt8 r_address[BYTES_IN_WORD];	/**< offset of of data to relocate 	*/
+  tUInt8 r_index[3];	/**< symbol table index of symbol 	*/
+  tUInt8 r_type[1];	/**< relocation type			*/
+  tUInt8 r_addend[BYTES_IN_WORD];	/**< datum addend				*/
 };
 
-enum {
-    RELOC_EXT_BITS_EXTERN_BIG	=((unsigned int) 0x80),
-    RELOC_EXT_BITS_EXTERN_LITTLE=((unsigned int) 0x01),
+#define	RELOC_EXT_BITS_EXTERN_BIG	((unsigned int) 0x80)
+#define	RELOC_EXT_BITS_EXTERN_LITTLE	((unsigned int) 0x01)
 
-    RELOC_EXT_BITS_TYPE_BIG	=((unsigned int) 0x1F),
-    RELOC_EXT_BITS_TYPE_SH_BIG	=0,
-    RELOC_EXT_BITS_TYPE_LITTLE	=((unsigned int) 0xF8),
-    RELOC_EXT_BITS_TYPE_SH_LITTLE=3,
+#define	RELOC_EXT_BITS_TYPE_BIG		((unsigned int) 0x1F)
+#define	RELOC_EXT_BITS_TYPE_SH_BIG	0
+#define	RELOC_EXT_BITS_TYPE_LITTLE	((unsigned int) 0xF8)
+#define	RELOC_EXT_BITS_TYPE_SH_LITTLE	3
 
 /** Bytes per relocation entry */
-    RELOC_EXT_SIZE		=(BYTES_IN_WORD + 3 + 1 + BYTES_IN_WORD)
-};
+#define	RELOC_EXT_SIZE	(BYTES_IN_WORD + 3 + 1 + BYTES_IN_WORD)
 
 enum reloc_type
 {
@@ -473,5 +475,5 @@ enum reloc_type
 #ifdef __HAVE_PRAGMA_PACK__
 #pragma pack()
 #endif
-} // namespace	usr
+
 #endif				/* __A_OUT_64_H__ */

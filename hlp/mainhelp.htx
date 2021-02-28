@@ -52,9 +52,9 @@
        and %I[CtrlBkSpace]%i - restore original values of  modified  byte.
        In text mode this key %I[F4]%i switches Wrap/Unwrap modes.
   %IF5%i - Goto. Moves current file pointer on given offset:
-        - from start of file.
-        - from current position.
-        - to virtual address.
+        - from start of file (%RABSOLUTE%r mode).
+        - from current position (%RRELATIVE%r mode).
+        - to virtual address (%RVIRTUAL%r mode).
   %IF6%i - Reread file.
   %IF7%i - Search. Offers to  input  sequence  %Iup  to  20  characters%i  and
        searches  for  it.  If  given  sequence  exists  then   program
@@ -120,10 +120,10 @@ All other keys have function defined by internal structure of module.
   %ICtrlF2%i - Select "submode" of view
   %ICtrlF6%i -  Address  Resolution  (Resolving)  -  in  hex/disasm  modes
            controls details of address in left  column.  Will  display
-           file  offset  from  beginning  of  the  file   or  relative
-           offset from  beginning  of  the  block/segment  of  current
-           binary format with the name of  block/segment.  All   other
-           keys are defined by selected mode.
+           absolute  file  offset  from  beginning  of  the  file   or
+           relative offset from  beginning  of  the  block/segment  of
+           current binary format with the name of  block/segment.  All
+           other keys are defined by selected mode.
 
   %UNote:%u you can jump on points  in  tables  or  lists  highlighted  by
         black background by pressing %I[ENTER]%i.

@@ -18,10 +18,13 @@
 ##############################################################################
 #  Main configure section of this makefile                                   #
 ##############################################################################
+HOST_CFLAGS=
+HOST_LDFLAGS=
+
 include ../../config.mak
 
-CXXFLAGS = $(HOST_CFLAGS)
-LDXXFLAGS = $(HOST_LDFLAGS)
+CFLAGS = $(CDEFOS) $(CDEFSYS) $(HOST_CFLAGS)
+LDFLAGS = $(OSLDEF) $(HOST_LDFLAGS)
 
 ###########################################################################
 # TARGET: put name of executable image here                               #
@@ -33,24 +36,25 @@ TARGET = lzss
 ##########################################################################
 
 INCS = -I. -I../../src
-LIBS = -L../../src/libbeye -lbeye $(EXTRALIBS)
-OBJS = lzss.o
+LIBS = -L../../src/libbeye -lbeye $(OS_LIBS)
+OBJS =\
+lzss.o
 all: $(TARGET)
 help: $(TARGET)
 
+distclean:
 clean:
 	$(RM) $(OBJS)
-	$(RM) $(TARGET)$(EXESUF)
-
-distclean: clean
+	$(RM) $(TARGET)
+	$(RM) beye.map
 
 cleansys:
 	$(RM) lib/sysdep/$(MACHINE)/$(HOST)/*.o
 
 $(TARGET): $(OBJS)
-	$(CXX) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
+	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 
-%.o : %.cpp
-	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
+%.o : %.c
+	$(CC) $(CFLAGS) $(INCS) -c $< -o $@
 
-lzss.o:                        lzss.cpp
+lzss.o:                        lzss.c

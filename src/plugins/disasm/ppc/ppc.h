@@ -1,14 +1,7 @@
 #ifndef POWER_PC_G5
 #define POWER_PC_G5 1
 
-#include "libbeye/bswap.h"
-
-namespace	usr {
-enum {
-    TAB_POS		=10,
-    PPC_LSHIFT_MASK	=0x0F, /* mask for left shift operations */
-    PPC_EA		=0x80 /* mark effective address computing */
-};
+#define TAB_POS 10
 
 typedef struct s_ppc_arg {
     /*
@@ -22,37 +15,39 @@ typedef struct s_ppc_arg {
     unsigned char type;
     unsigned char off;
     unsigned char len;
+#define PPC_LSHIFT_MASK	0x0F /* mask for left shift operations */
+#define PPC_EA		0x80 /* mark effective address computing */
     unsigned char flg;
 }ppc_arg;
 
 typedef struct s_ppc_opcode {
     const char *name;
-    uint32_t	bits;
-    uint32_t	mask;
+    tUInt32	bits;
+    tUInt32	mask;
     unsigned long flags;
     ppc_arg	args[6];
 }ppc_opcode;
 
 #define PPC_0 { '\0', 0, 0, 0 }
-enum {
-    PPC_CPU		=0x00000000UL,
-    PPC_FPU		=0x00000001UL,
-    PPC_ALTIVEC		=0x00000002UL,
-    PPC_CLONE_MSK	=0x0000000FUL,
-    PPC_BRANCH_INSN	=0x00000010UL,
-    PPC_ORDINAL		=0x00000000UL,
-    PPC_VEC		=0x00000100UL,
-    PPC_SPE		=0x00000200UL,
-    PPC_DIALECT		=0x0000FF00UL
-};
-#if __BYTE_ORDER == __BIG_ENDIAN
+
+#define PPC_CPU		0x00000000UL
+#define PPC_FPU		0x00000001UL
+#define PPC_ALTIVEC	0x00000002UL
+#define PPC_CLONE_MSK	0x0000000FUL
+#define PPC_BRANCH_INSN	0x00000010UL
+#define PPC_ORDINAL	0x00000000UL
+#define PPC_VEC		0x00000100UL
+#define PPC_SPE		0x00000200UL
+#define PPC_DIALECT	0x0000FF00UL
+
+#if __BYTE_ORDER != __LITTLE_ENDIAN
 /* Native endian versions: */
-#define PPC_GET_BITS(opcode,off,len) (((uint32_t)(opcode)>>off)&((1<<len)-1))
-#define PPC_PUT_BITS(bits,off,len) (((uint32_t)(bits)&((1<<len)-1))<<off)
+#define PPC_GET_BITS(opcode,off,len) (((opcode)>>off)&((1<<len)-1))
+#define PPC_PUT_BITS(bits,off,len) (((bits)&((1<<len)-1))<<off)
 #else
 /* Reverse endian versions: */
-#define PPC_GET_BITS(opcode,off,len) (((uint32_t)(opcode)>>(32-(off+len)))&((1<<len)-1))
-#define PPC_PUT_BITS(bits,off,len) (((uint32_t)(bits)&((1<<len)-1))<<(32-(off+len)))
+#define PPC_GET_BITS(opcode,off,len) (((opcode)>>(32-(off+len)))&((1<<len)-1))
+#define PPC_PUT_BITS(bits,off,len) (((bits)&((1<<len)-1))<<(32-(off+len)))
 #endif
 
 #define MAKE_OP(op) PPC_PUT_BITS(op,0,6)
@@ -328,5 +323,5 @@ enum {
 #define Z22_SH  { '+',16, 6, 0 }
 #define Z22_DCM { '+',16, 6, 0 }
 
-} // namespace	usr
+
 #endif

@@ -1,5 +1,5 @@
 /**
- * @namespace	usr_plugins_auto
+ * @namespace   beye_plugins_auto
  * @file        plugins/bin/rdoff.h
  * @brief       This file contains RDOFF v1 file definitions.
  * @version     -
@@ -17,9 +17,10 @@
 #ifndef __RDOFF_INC
 #define __RDOFF_INC
 
-#include "config.h"
+#ifndef __SYS_DEP_H
+#include "_sys_dep.h"
+#endif
 
-namespace	usr {
 #ifdef __HAVE_PRAGMA_PACK__
 #pragma pack(1)
 #endif
@@ -27,22 +28,21 @@ namespace	usr {
 /** RDOFF v1 fixed header */
 typedef struct tag_rdoff_Header
 {
-  uint8_t  id[6]; /**< RDOFF1 or RDOFF\01 */
-  uint32_t header_len;
+  tUInt8  id[6]; /**< RDOFF1 or RDOFF\01 */
+  tUInt32 header_len;
 }rdoff_Header;
 
-struct RDOFF_RELOC {
-  uint8_t  reflen; /**< length of references */
-  uint8_t  is_rel; /**< is relative fixup */
-  uint16_t segto;  /**< logical # of segment or ext. reference
-			    i.e. max external refers = 65536-2 */
-  uint32_t offset; /**< offset from start of file */
-
-    bool operator<(const RDOFF_RELOC& rhs) const { return offset<rhs.offset; }
-};
+typedef struct tag_RDOFF_RELOC
+{
+  tUInt8  reflen; /**< length of references */
+  tUInt8  is_rel; /**< is relative fixup */
+  tUInt16 segto;  /**< logical # of segment or ext. reference
+                            i.e. max external refers = 65536-2 */
+  tUInt32 offset; /**< absolute offset within file */
+}RDOFF_RELOC;
 
 #ifdef __HAVE_PRAGMA_PACK__
 #pragma pack()
 #endif
-} // namespace	usr
+
 #endif

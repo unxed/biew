@@ -1,4 +1,4 @@
- Portable Executable introduction
+ Portable Executable introduction 
   The  recent  addition  of  the  Microsoft(R)  Windows  NT   (trade);
 operating system to the family of Windows (trade);  operating  systems
 brought many changes to the development environment and  more  than  a
@@ -15,21 +15,21 @@ environments. Yet developers familiar with the UNIX  environment  will
 find that the PE file format is similar to, if not based on, the  COFF
 specification.
 
-		%BFunction keys%b
+                %BFunction keys%b
 
 %IAltF1%i   -  Display this screen
 %IAltF2%i   -  Display references to external modules
-	   By pressing ENTER you can see external names
-	   and ordinal numbers of functions from selected
-	   module that are required for external link resolving
+           By pressing ENTER you can see external names
+           and ordinal numbers of functions from selected
+           module that are required for external link resolving
 %IAltF3%i   -  Display list of exported names
 %IAltF8%i   -  Display PE-header
 %IAltF10%i  -  Display list of object definitions
 
-		%BAddress Resolving%b
+                %BAddress Resolving%b
 
 %IPEH :xxxx%i - Current file position is PE header
-	    %Uxxxx%u - local offset within PE header
+            %Uxxxx%u - local offset within PE header
 %IPEOD:xxxx%i - Current file position is object definition table
-	    %Uxxxx%u - local offset within ObjDef table
+            %Uxxxx%u - local offset within ObjDef table
 %I.xxxxxxxx%i - Virtual address

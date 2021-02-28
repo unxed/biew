@@ -1,11 +1,6 @@
 #ifndef __MMIO
 #define __MMIO 1
 
-#include "config.h"
-#include "plugin.h"
-#include "plugins/binary_parser.h"
-
-namespace	usr {
 typedef unsigned long DWORD;
 typedef unsigned short WORD;
 typedef unsigned char BYTE;
@@ -64,28 +59,12 @@ typedef struct __attribute__((__packed__))
 ,((char *)&i)[2]?((char *)&i)[2]:' '\
 ,((char *)&i)[3]?((char *)&i)[3]:' '
 
-    struct wTagNames {
-	unsigned short wTag;
-	const char *name;
-    };
+typedef struct
+{
+    unsigned short wTag;
+    const char *name;
+}wTagNames;
+extern wTagNames wtagNames[];
+extern const char *wtag_find_name(unsigned short wtag);
 
-    class Wave_Parser : public Binary_Parser {
-	public:
-	    Wave_Parser(BeyeContext& b,binary_stream&,CodeGuider&,udn&);
-	    virtual ~Wave_Parser();
-
-	    virtual const char*		prompt(unsigned idx) const;
-
-	    virtual __filesize_t	show_header() const;
-	    virtual int			query_platform() const;
-
-	    static const char*		wtag_find_name(unsigned short wtag) __CONST_FUNC__;
-	private:
-	    __filesize_t		wav_find_chunk(__filesize_t off,unsigned long id) const;
-
-	    BeyeContext&		bctx;
-	    binary_stream&		main_handle;
-	    udn&			_udn;
-    };
-} // namespace	usr
 #endif

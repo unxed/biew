@@ -1,7 +1,7 @@
 # Main makefile of the project
 
-INSTALLABLE_SUBDIRS = bin_rc doc man src hlp
-SUBDIRS = $(INSTALLABLE_SUBDIRS)
+INSTALLABLE_SUBDIRS = bin_rc man src
+SUBDIRS = $(INSTALLABLE_SUBDIRS) hlp
 
 DO_MAKE = @ for i in $(SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
 DO_IMAKE = @ for i in $(INSTALLABLE_SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
@@ -27,7 +27,7 @@ clean:
 
 distclean:
 	$(DO_MAKE)
-	rm -f config.h config.mak configure.log version.h .depend
+	rm -f config.h config.mak config.log
 
 uninstall:
 	$(DO_IMAKE)

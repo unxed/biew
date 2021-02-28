@@ -1,5 +1,5 @@
 /**
- * @namespace	usr_plugins_auto
+ * @namespace   beye_plugins_auto
  * @file        plugins/bin/mz.h
  * @brief       This file contains MZ executable file definitions.
  * @version     -
@@ -16,81 +16,34 @@
 **/
 #ifndef __MZ_INC
 #define __MZ_INC
-#include <set>
 
-#include "config.h"
-#include "plugins/binary_parser.h"
+#ifndef __BEYEUTIL__H
+#include "beyeutil.h"
+#endif
 
-namespace	usr {
 #ifdef __HAVE_PRAGMA_PACK__
 #pragma pack(1)
 #endif
-    struct MZHEADER {
-	uint16_t mzPartLastPage;
-	uint16_t mzPageCount;
-	uint16_t mzRelocationCount;
-	uint16_t mzHeaderSize;
-	uint16_t mzMinMem;
-	uint16_t mzMaxMem;
-	uint16_t mzRelocationSS;
-	uint16_t mzExeSP;
-	uint16_t mzCheckSumm;
-	uint16_t mzExeIP;
-	uint16_t mzRelocationCS;
-	uint16_t mzTableOffset;
-	uint16_t mzOverlayNumber;
-    };
+
+typedef struct tagMZHEADER
+{
+ tUInt16 mzPartLastPage;
+ tUInt16 mzPageCount;
+ tUInt16 mzRelocationCount;
+ tUInt16 mzHeaderSize;
+ tUInt16 mzMinMem;
+ tUInt16 mzMaxMem;
+ tUInt16 mzRelocationSS;
+ tUInt16 mzExeSP;
+ tUInt16 mzCheckSumm;
+ tUInt16 mzExeIP;
+ tUInt16 mzRelocationCS;
+ tUInt16 mzTableOffset;
+ tUInt16 mzOverlayNumber;
+}MZHEADER;
+
 #ifdef __HAVE_PRAGMA_PACK__
 #pragma pack()
 #endif
-    struct MZ_Reloc {
-	MZ_Reloc(const char& c):__codelen(c) {}
 
-	__filesize_t	laddr;
-
-	bool operator<(const MZ_Reloc& rhs) const { return laddr<rhs.laddr; }
-	bool operator==(const MZ_Reloc& rhs) const { return laddr >= laddr && rhs.laddr < rhs.laddr + __codelen; }
-	private:
-	    const char&	__codelen;
-    };
-
-    class MZ_Parser : public Binary_Parser {
-	public:
-	    MZ_Parser(BeyeContext& b,binary_stream& h,CodeGuider&,udn&);
-	    virtual ~MZ_Parser();
-
-	    virtual const char*		prompt(unsigned idx) const;
-	    virtual __filesize_t	action_F1();
-
-	    virtual __filesize_t	show_header() const;
-	    virtual std::string		bind(const DisMode& _parent,__filesize_t shift,Bin_Format::bind_type flg,int codelen,__filesize_t r_shift);
-	    virtual int			query_platform() const;
-	    virtual std::string		address_resolving(__filesize_t);
-	    virtual __filesize_t	va2pa(__filesize_t va) const;
-	    virtual __filesize_t	pa2va(__filesize_t pa) const;
-
-	    static __filesize_t		is_new_exe(binary_stream& main_handle);
-	protected:
-	    CodeGuider&			code_guider() const __PURE_FUNC__ { return _code_guider; }
-	    BeyeContext&		bctx() const __PURE_FUNC__ { return _bctx; }
-	    binary_stream&		main_handle() const __PURE_FUNC__ { return _main_handle; }
-	    virtual __filesize_t	headshift() const __PURE_FUNC__ { return _headshift; }
-	    udn&			_udn() const __PURE_FUNC__ { return __udn; }
-	    char			__codelen;
-	private:
-	    std::string			QueryAddInfo( unsigned char *memmap ) const;
-	    std::string			QueryAddInfo() const;
-	    void			BuildMZChain();
-	    bool			isMZReferenced(__filesize_t shift,char len);
-
-	    MZHEADER		mz;
-	    unsigned long	HeadSize;
-	    std::set<MZ_Reloc> CurrMZChain;
-	    __filesize_t	_headshift;
-	    BeyeContext&	_bctx;
-	    binary_stream&	_main_handle;
-	    CodeGuider&		_code_guider;
-	    udn&		__udn;
-    };
-} // namespace	usr
 #endif

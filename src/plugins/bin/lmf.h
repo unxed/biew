@@ -1,5 +1,5 @@
 /**
- * @namespace	usr_plugins_auto
+ * @namespace   beye_plugins_auto
  * @file        plugins/bin/lmf.c
  * @brief       This file contains lmf file structures and constants.
  * @version     -
@@ -18,9 +18,10 @@
 #ifndef __LMF_INC
 #define __LMF_INC
 
-#include "config.h"
+#ifndef __SYS_DEP_H
+#include "_sys_dep.h"
+#endif
 
-namespace	usr {
 #if __WATCOMC__ > 1000
 #pragma pack(__push,1);
 #else
@@ -29,18 +30,18 @@ namespace	usr {
 
 /*	LMF structure defenitions
  */
-
+	
 typedef struct tag_lmf_header	/* This preceeds each record defined below */
 {
-	int8_t rec_type,
+	tInt8 rec_type,
 		zero1;
-	uint16_t data_nbytes,
+	tUInt16 data_nbytes,
 		spare;
 } lmf_header;
 
 typedef struct tag_lmf_definition	/* Must be first record in load file */
 {
-	uint16_t version_no,
+	tUInt16 version_no,
 		cflags,
 		cpu,
 		fpu,
@@ -49,7 +50,7 @@ typedef struct tag_lmf_definition	/* Must be first record in load file */
 		heap_index,
 		argv_index,
 		zero1[4];
-	uint32_t code_offset,
+	tUInt32 code_offset,
 		stack_nbytes,
 		heap_nbytes,
 		flat_offset,	/* Must be zero if not set _PCF_FLAT in cflags	(AG) */
@@ -61,8 +62,8 @@ typedef struct tag_lmf_definition	/* Must be first record in load file */
 
 typedef struct tag_lmf_data	/* Code or data record to load into memory */
 {
-	uint16_t index;
-	uint32_t offset;
+	tUInt16 index;
+	tUInt32 offset;
 	/* Variable length field of n bytes starts here */
 	/* Data to load in         ^^^ n is a length of loading data
 	   segment numbered        n = lmf_header.data_nbytes of this record
@@ -71,45 +72,45 @@ typedef struct tag_lmf_data	/* Code or data record to load into memory */
 
 typedef struct tag_lmf_resource
 {
-	uint16_t resource_type;   /* 0 - usage messages */
-	uint16_t zero[3];
+	tUInt16 resource_type;   /* 0 - usage messages */
+	tUInt16 zero[3];
 } lmf_resource;
 
 /*	Record types
  */
-enum {
-    _LMF_DEFINITION_REC		=0,
-    _LMF_COMMENT_REC		=1,
-			    /* ^^^ Never seen this record.		(AG)  */
-    _LMF_DATA_REC		=2,
-    _LMF_FIXUP_SEG_REC		=3,
-    _LMF_FIXUP_80X87_REC	=4,
-    _LMF_EOF_REC		=5,
-    _LMF_RESOURCE_REC		=6,
-    _LMF_ENDDATA_REC		=7,
-    _LMF_FIXUP_LINEAR_REC	=8,
-			    /* ^^^ Never seen this record.		(AG)  */
-    _LMF_PHRESOURCE		=9,	/* A widget resource for photon apps */
-			    /* ^^^ Never seen this record.		(AG)  */
+
+#define _LMF_DEFINITION_REC     0
+#define _LMF_COMMENT_REC        1
+                            /* ^^^ Never seen this record.		(AG)  */
+#define _LMF_DATA_REC           2
+#define _LMF_FIXUP_SEG_REC      3
+#define _LMF_FIXUP_80X87_REC    4
+#define _LMF_EOF_REC            5
+#define _LMF_RESOURCE_REC       6
+#define _LMF_ENDDATA_REC        7
+#define _LMF_FIXUP_LINEAR_REC   8
+                            /* ^^^ Never seen this record.		(AG)  */
+#define _LMF_PHRESOURCE			9	/* A widget resource for photon apps */
+                            /* ^^^ Never seen this record.		(AG)  */
+
+/*	Bit defitions for lh_code_flags
+ */
+
+#define _PCF_LONG_LIVED     0x0001
+#define _PCF_32BIT          0x0002
+#define _PCF_PRIVMASK       0x000c   /* Two bits */
+#define _PCF_FLAT           0x0010
+#define _PCF_NOSHARE        0x0020
+
 /*	The top 4 bits of the segment sizes
  */
 
-    _LMF_CODE			=0x2
-};
-/*	Bit defitions for lh_code_flags
- */
-enum {
-    _PCF_LONG_LIVED     =0x0001,
-    _PCF_32BIT          =0x0002,
-    _PCF_PRIVMASK       =0x000c,  /* Two bits */
-    _PCF_FLAT           =0x0010,
-    _PCF_NOSHARE        =0x0020
-};
+#define _LMF_CODE           0x2
 
 #if __WATCOMC__ > 1000
 #pragma pack(__pop);
 #else
 #pragma pack()
 #endif
-} // namespace	usr
+
 #endif/*__LMF_INC*/

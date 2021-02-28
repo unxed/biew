@@ -1,5 +1,5 @@
 /**
- * @namespace	usr_plugins_auto
+ * @namespace   beye_plugins_auto
  * @file        plugins/bin/arch.h
  * @brief       This file contains Archive file definitions.
  * @version     -
@@ -17,9 +17,10 @@
 #ifndef __ARCH_INC
 #define __ARCH_INC
 
-#include "config.h"
+#ifndef __SYS_DEP_H
+#include "_sys_dep.h"
+#endif
 
-namespace	usr {
 #ifdef __HAVE_PRAGMA_PACK__
 #pragma pack(1)
 #endif
@@ -42,29 +43,29 @@ namespace	usr {
 
 #define ARMAP_TIME_OFFSET       60
 
-struct ar_hdr {
-    int8_t  ar_magic[8];	/**< !<arch>012 */
-    int8_t  ar_name[16];	/**< name of this member */
-    int8_t  ar_date[12];	/**< file mtime */
-    uint8_t ar_uid[6];		/**< owner uid; printed as decimal */
-    uint8_t ar_gid[6];		/**< owner gid; printed as decimal */
-    uint8_t ar_mode[8];		/**< file mode, printed as octal   */
-    uint8_t ar_size[10];	/**< file size, printed as decimal */
-    uint8_t ar_fmag[2];		/**< should contain ARFMAG */
-};
+typedef struct tag_ar_hdr {
+  tInt8  ar_magic[8];          /**< !<arch>012 */
+  tInt8  ar_name[16];		/**< name of this member */
+  tInt8  ar_date[12];		/**< file mtime */
+  tUInt8 ar_uid[6];		/**< owner uid; printed as decimal */
+  tUInt8 ar_gid[6];		/**< owner gid; printed as decimal */
+  tUInt8 ar_mode[8];		/**< file mode, printed as octal   */
+  tUInt8 ar_size[10];		/**< file size, printed as decimal */
+  tUInt8 ar_fmag[2];		/**< should contain ARFMAG */
+}ar_hdr;
 
-struct ar_sub_hdr {
-    int8_t  ar_name[16];	/**< name of this member */
-    int8_t  ar_date[12];	/**< file mtime */
-    uint8_t ar_uid[6];		/**< owner uid; printed as decimal */
-    uint8_t ar_gid[6];		/**< owner gid; printed as decimal */
-    uint8_t ar_mode[8];		/**< file mode, printed as octal   */
-    uint8_t ar_size[10];	/**< file size, printed as decimal */
-    uint8_t ar_fmag[2];		/**< should contain ARFMAG */
-};
+typedef struct tag_ar_sub_hdr {
+  tInt8  ar_name[16];		/**< name of this member */
+  tInt8  ar_date[12];		/**< file mtime */
+  tUInt8 ar_uid[6];		/**< owner uid; printed as decimal */
+  tUInt8 ar_gid[6];		/**< owner gid; printed as decimal */
+  tUInt8 ar_mode[8];		/**< file mode, printed as octal   */
+  tUInt8 ar_size[10];		/**< file size, printed as decimal */
+  tUInt8 ar_fmag[2];		/**< should contain ARFMAG */
+}ar_sub_hdr;
 
 #ifdef __HAVE_PRAGMA_PACK__
 #pragma pack()
 #endif
-} // namespace	usr
+
 #endif

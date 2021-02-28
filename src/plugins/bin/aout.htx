@@ -1,4 +1,4 @@
- a.out introduction
+ a.out introduction 
     The %Uoriginal UNIX object file format%u, still in use on SunOS, though
 not Solaris operating systems.
     %IThe a.out file is the output file of the link editor ld.%i
@@ -8,11 +8,11 @@ option) produces non-executable files with the same basic structure.
 
    Sorry! a.out (Assembler and linker output format) in alpha-stage
 
-		%BFunction keys%b
+                %BFunction keys%b
 
 %IAltF1%i   -  Display this screen
 
-		%BAddress Resolving%b
+                %BAddress Resolving%b
 
 %Ia.outh:xx%i - Current file position is a.out header
-	    %Uxx%u - local offset within a.out header
+            %Uxx%u - local offset within a.out header

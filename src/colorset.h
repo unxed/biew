@@ -1,5 +1,5 @@
 /**
- * @namespace	usr
+ * @namespace   beye
  * @file        colorset.h
  * @brief       This file contains color function prototypes.
  * @version     -
@@ -17,15 +17,21 @@
 #ifndef __COLORSET__H
 #define __COLORSET__H
 
-#include "libbeye/twindow.h"
+#ifndef __TWIN_H
+#include "libbeye/twin.h"
+#endif
 
-namespace	usr {
-    typedef struct tag_namedColorDef {
-	const char  *name;
-	Color  color;
-    }namedColorDef;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-    extern const namedColorDef named_color_def[16];
+typedef struct tag_namedColorDef
+{
+  const char  *name;
+  Color  color;
+}namedColorDef;
+
+extern namedColorDef named_color_def[16];
 
 typedef struct tag_MultiEditCSet
 {
@@ -207,9 +213,12 @@ typedef struct tag_HelpCSet
   ColorAttr sellink;
 }HelpCSet;
 
-    extern HelpCSet help_cset;
+extern HelpCSet help_cset;
 
-    bool   csetReadIniFile(const std::string& pal_name);
-} // namespace	usr
+extern tBool   csetReadIniFile(const char *pal_name);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

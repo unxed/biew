@@ -1,5 +1,5 @@
 /**
- * @namespace	usr
+ * @namespace   beye
  * @file        beyehelp.h
  * @brief       This file contains prototypes of BEYE help system.
  * @version     -
@@ -16,91 +16,76 @@
 **/
 #ifndef __BEYEHELP__H
 #define __BEYEHELP__H
-#include <fstream>
-#include <vector>
-#include <string>
 
-#include "search.h"
-#include "libbeye/binary_packet.h"
-#include "libbeye/twindow.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-namespace	usr {
+#ifndef __TWIN_H
+#include "libbeye/twin.h"
+#endif
+
 #define BEYE_HELP_VER "BEYE_HLP v6.1.0"
 
-    enum {
-	HLP_SLONG_LEN=9,
-	HLP_VER_LEN=16
-    };
-/** Maximal size of help topic - is 0xFFFF bytes */
-    struct beye_help_item {
-	char	item_id[HLP_SLONG_LEN]; /**< character representation of short type. Null-terminated */
-	char	item_off[HLP_SLONG_LEN];
-	char	item_length[HLP_SLONG_LEN];
-	char	item_decomp_size[HLP_SLONG_LEN];
-    };
+#define HLP_SLONG_LEN 9
+#define HLP_VER_LEN 16
 
-    struct beye_help {
-	char		help_version[HLP_VER_LEN]; /**< identifiaction signature */
-	char		item_count[HLP_SLONG_LEN]; /**< total count of items */
-	beye_help_item	items[1];         /**< Array of items */
+/** Maximal size of help topic - is 0xFFFF bytes */
+
+typedef struct tag_beye_help_item
+{
+  char     item_id[HLP_SLONG_LEN]; /**< character representation of short type. Null-terminated */
+  char     item_off[HLP_SLONG_LEN];
+  char     item_length[HLP_SLONG_LEN];
+  char     item_decomp_size[HLP_SLONG_LEN];
+}BEYE_HELP_ITEM;
+
+typedef struct tag_beye_help
+{
+  char            help_version[HLP_VER_LEN]; /**< identifiaction signature */
+  char            item_count[HLP_SLONG_LEN]; /**< total count of items */
+  BEYE_HELP_ITEM  items[1];         /**< Array of items */
 /**< Binary data of help */
-    };
+}BEYE_HELP;
 
 /** Color definition */
-    enum {
-	HLPC_BOLD_ON		=0x01,
-	HLPC_ITALIC_ON		=0x02,
-	HLPC_UNDERLINE_ON	=0x03,
-	HLPC_STRIKETHROUGH_ON	=0x04,
-	HLPC_REVERSE_ON		=0x05,
-	HLPC_LINK_ON		=0x06,
-	HLPC_BOLD_OFF		=0x11,
-	HLPC_ITALIC_OFF		=0x12,
-	HLPC_UNDERLINE_OFF	=0x13,
-	HLPC_STRIKETHROUGH_OFF	=0x14,
-	HLPC_REVERSE_OFF	=0x15,
-	HLPC_LINK_OFF		=0x16
-    };
+#define HLPC_BOLD_ON               0x01
+#define HLPC_ITALIC_ON             0x02
+#define HLPC_UNDERLINE_ON          0x03
+#define HLPC_STRIKETHROUGH_ON      0x04
+#define HLPC_REVERSE_ON            0x05
+#define HLPC_LINK_ON               0x06
+#define HLPC_BOLD_OFF              0x11
+#define HLPC_ITALIC_OFF            0x12
+#define HLPC_UNDERLINE_OFF         0x13
+#define HLPC_STRIKETHROUGH_OFF     0x14
+#define HLPC_REVERSE_OFF           0x15
+#define HLPC_LINK_OFF              0x16
 
-    class Search;
-    class Beye_Help : public Opaque {
-	public:
-	    Beye_Help(BeyeContext& bc);
-	    virtual ~Beye_Help();
+extern tBool           __FASTCALL__ hlpOpen( tBool interactive );
+extern void            __FASTCALL__ hlpClose( void );
+                       /** Return uncompressed size of help item
+                          0 - if error occured */
+extern unsigned long   __FASTCALL__ hlpGetItemSize(unsigned long item_id);
+extern tBool           __FASTCALL__ hlpLoadItem(unsigned long item_id, void __HUGE__* buffer);
+                       /** Fully-functionallity utility for displaying help */
+extern void            __FASTCALL__ hlpDisplay(unsigned long id);
 
-	    virtual bool	open(bool interactive);
-	    virtual void	run(unsigned long item_id);
-	    virtual void	close();
-		       /** Return uncompressed size of help item
-			  0 - if error occured */
-	    virtual unsigned long	get_item_size(unsigned long item_id);
-	    virtual objects_container<char>	load_item(unsigned long item_id);
+                       /** Returns array of char pointers.
+                          Title always is data[0] */
+extern char **         __FASTCALL__ hlpPointStrings(char __HUGE__ *data,unsigned long data_size,
+                                       unsigned long *nstr);
+                       /** Filles buffer as video memory from string */
+extern unsigned        __FASTCALL__ hlpFillBuffer(tvioBuff * dest,unsigned int cw_dest,
+                                     const char * str,unsigned int cb_str,
+                                     unsigned int shift,unsigned *n_tabs,
+                                     tBool is_hl);
+                       /** Paints line of help */
+extern void            __FASTCALL__ hlpPaintLine(TWindow *win,unsigned y,const char *str,
+                                    tBool is_hl);
 
-		       /** Returns array of char pointers.
-			  Title always is data[0] */
-	    virtual std::vector<std::string> point_strings(objects_container<char>& data) const;
-		       /** Filles buffer as video memory from string */
-	    virtual unsigned		fill_buffer(TWindow& win,tRelCoord x,tRelCoord y,
-						    const std::string& str,
-						    bool is_hl=false,bool dry_run=false) const;
-		       /** Paints line of help */
-	    virtual void		paint_line(TWindow& win,unsigned y,const std::string& str, bool is_hl) const;
-	    virtual int			ListBox(const std::vector<std::string>& names,const std::string& title);
-	private:
-	    bool			_lb_searchtext(const char *str,const char *tmpl,unsigned searchlen,const int *cache, Search::search_flags flg);
-	    void			paint(TWindow& win,const std::vector<std::string>& names,unsigned start,unsigned height,unsigned width) const;
-	    bool			find_item(unsigned long item_id);
-
-	    BeyeContext&		bctx;
-	    std::fstream		fs;
-	    beye_help_item		bhi;
-	    Search&			search;
-
-	    char			searchtxt[21];
-	    unsigned char		searchlen;
-	    Search::search_flags	sflg;
-	    static const unsigned	TEXT_TAB=8;
-    };
-} // namespace	usr
+#ifdef __cplusplus
+}
+#endif
 
 #endif

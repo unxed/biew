@@ -1,5 +1,5 @@
 /**
- * @namespace	usr_plugins_I
+ * @namespace   beye_plugins_I
  * @file        plugins/hexmode.h
  * @brief       This file contains function prototypes for hexadecinal mode.
  * @version     -
@@ -17,11 +17,13 @@
 #ifndef __HEXMODE_H
 #define __HEXMODE_H
 
-struct hIniProfile;
-namespace	usr {
-    extern unsigned		hexAddressResolv;
-    bool __FASTCALL__		hexAddressResolution(unsigned& hexAddressResolv);
-    unsigned  __FASTCALL__	ReadIniAResolv(BeyeContext& bc, Ini_Profile& ini );
-    void  __FASTCALL__		WriteIniAResolv(BeyeContext& bc, Ini_Profile& ini,unsigned hexAddressResolv, unsigned virt_width_corr);
-} // namespace	usr
+#ifndef __FILE_INI_RUNTIME_SUPPORT_SYSTEM__
+#include "libbeye/file_ini.h"
+#endif
+
+extern tBool hexAddressResolv;
+extern tBool __FASTCALL__ hexAddressResolution( void );
+extern void  __FASTCALL__ ReadIniAResolv( hIniProfile *ini );
+extern void  __FASTCALL__ WriteIniAResolv( hIniProfile *ini );
+
 #endif

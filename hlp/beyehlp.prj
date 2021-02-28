@@ -12,7 +12,7 @@
 [OPTION]
 ; This is output file name
 output = beye.hlp
-id = BEYE_HLP v6.1.0
+id = BEYE_HLP v1
 [ITEMS]
 ; item_id = source_file_name
 1 = ../doc/licence.txt
@@ -27,12 +27,12 @@ id = BEYE_HLP v6.1.0
 1002 = ../src/plugins/hexmode.htx
 10000 = ../src/plugins/bin/aout.htx
 10001 = ../src/plugins/bin/arch.htx
-10002 = ../src/plugins/bin/coff.htx
-10003 = ../src/plugins/bin/elf.htx
+10002 = ../src/plugins/bin/coff386.htx
+10003 = ../src/plugins/bin/elf386.htx
 10004 = ../src/plugins/bin/le.htx
 10005 = ../src/plugins/bin/lx.htx
 10006 = ../src/plugins/bin/ne.htx
-10007 = ../src/plugins/bin/nlm.htx
+10007 = ../src/plugins/bin/nlm386.htx
 10008 = ../src/plugins/bin/opharlap.htx
 10009 = ../src/plugins/bin/pe.htx
 10010 = ../src/plugins/bin/pharlap.htx
@@ -44,7 +44,7 @@ id = BEYE_HLP v6.1.0
 20000 = ../src/plugins/disasm/ix86/ix86.htx
 20001 = ../src/plugins/disasm/ix86/ix86size.htx
 20002 = ../src/plugins/disasm/ix86/k86size.htx
-20010 = ../src/plugins/disasm/data_disasm.htx
+20010 = ../src/plugins/disasm/null_da.htx
 20020 = ../src/plugins/disasm/avr/avr.htx
 20021 = ../src/plugins/disasm/avr/avrsize.htx
 20030 = ../src/plugins/disasm/java/java.htx

@@ -386,7 +386,7 @@ measurements with profiler.
 ------------------------------------------
 
    Somewhy it has happened that mainstream of programmers thinks  that
-destiny of C language is  cdecl  calling  convention. It  is     fully
+destiny of C language is  cdecl  calling  convention. It is absolutely
 understandable that K&R created C language  on the earliest  stage  of
 computer industry evolution. The base concept of  accepted  agreements
 about  calling  convention  is implementation of variable  number   of
@@ -975,8 +975,9 @@ comparative table has appeared.
 
 TEST:
    All tests were performed on the same computer (AMDK6-200/128Mb).  I
-was interested in relative numbers  (it  would  be better to run  such
-tests  on i386-40 machine, but I was unable to  find such  a  rarity).
+was interested in relative but  not  absolute  numbers  (it  would  be
+better to run such tests on i386-40 machine, but I was unable to  find
+such a rarity).
    For the test I took kernel32.dll and used the  following  modes  of
 disassembling:   Reference   prediction   (Ctrl-F8),   Local   offsets
 (Ctrl-F6),  Save  as...(Shift-F10)  mode  of   assembler   (F2),   put

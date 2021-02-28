@@ -1,5 +1,5 @@
 /**
- * @namespace	usr
+ * @namespace   beye
  * @file        codeguid.h
  * @brief       This file contains prototypes code navigator.
  * @version     -
@@ -16,33 +16,28 @@
 **/
 #ifndef __CODEGUID__H
 #define __CODEGUID__H
-#include <vector>
 
-namespace	usr {
-    class DisMode;
-    class BeyeContext;
-    class CodeGuider : public Opaque {
-	public:
-	    CodeGuider(BeyeContext&);
-	    virtual ~CodeGuider();
+#ifndef __SYS_DEP_H
+#include "_sys_dep.h"
+#endif
 
-	    void		reset_go_address( int keycode );
-	    void		add_go_address(const DisMode& parent,std::string& str,__filesize_t addr);
-	    void		add_back_address();
-	    __filesize_t	get_go_address(unsigned keycode);
-	    std::string		encode_address(__filesize_t cfpos,bool aresolv);
-	    const char*		image() const { return codeguid_image; }
-	private:
-	    char*		gidBuildKeyStr();
-	    int			gidGetKeyIndex(char key) const;
-	    char		gidGetAddressKey( unsigned _index ) const;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-	    char		codeguid_image[6];
-	    std::vector<__filesize_t> BackAddr;
-	    std::vector<std::pair<__filesize_t,unsigned> > GoAddr;
-	    unsigned char	Alarm;
-	    BeyeContext&	bctx;
-	    std::string		addr;
-    };
-} // namespace	usr
+extern char codeguid_image[];
+
+extern void              __FASTCALL__ GidResetGoAddress( int keycode );
+extern void              __FASTCALL__ GidAddGoAddress(char *str,__filesize_t addr);
+extern void              __FASTCALL__ GidAddBackAddress( void );
+extern __filesize_t      __FASTCALL__ GidGetGoAddress(unsigned keycode);
+extern char *            __FASTCALL__ GidEncodeAddress(__filesize_t cfpos,tBool aresolv);
+
+extern tBool             __FASTCALL__ initCodeGuider( void );
+extern void              __FASTCALL__ termCodeGuider( void );
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

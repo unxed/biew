@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-#include "beyelib/twindow.h"
+#include "beyelib/twin.h"
 #include "beyelib/beyelib.h"
 #include "beyelib/kbd_code.h"
 

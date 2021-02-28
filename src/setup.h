@@ -1,5 +1,5 @@
 /**
- * @namespace	usr
+ * @namespace   beye
  * @file        setup.h
  * @brief       This file included BEYE setup functions description.
  * @version     -
@@ -17,26 +17,15 @@
 #ifndef __SETUP__H
 #define __SETUP__H
 
-namespace	usr {
-    class Setup : public Opaque {
-	public:
-	    Setup(BeyeContext& bc);
-	    virtual ~Setup();
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-	    virtual void	run();
-	private:
-	    bool		select_codepage();
-	    void		paint(TWindow& twin);
-	    std::string		beyeGetColorSetName() const;
-	    std::string		beyeGetSyntaxName() const;
+extern char *     beyeGetHelpName( void );
+extern void       Setup( void );
 
-	    static void		draw_prompt();
+#ifdef __cplusplus
+}
+#endif
 
-	    BeyeContext&	bctx;
-	    unsigned		default_cp;
-	    static const char*	setuptxt[];
-	    static const char*	cp_list[];
-    };
-    std::string		beyeGetHelpName();
-} // namespace	usr
 #endif

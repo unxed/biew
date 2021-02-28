@@ -1,5 +1,5 @@
 /**
- * @namespace	usr_plugins_auto
+ * @namespace   beye_plugins_auto
  * @file        plugins/bin/pharlap.h
  * @brief       This file contains PharLap executable file definitions.
  * @version     -
@@ -17,9 +17,10 @@
 #ifndef __PHARLAP_INC
 #define __PHARLAP_INC
 
-#include "config.h"
+#ifndef __SYS_DEP_H
+#include "_sys_dep.h"
+#endif
 
-namespace	usr {
 #ifdef __HAVE_PRAGMA_PACK__
 #pragma pack(1)
 #endif
@@ -27,100 +28,100 @@ namespace	usr {
 /** Format of .old Phar Lap .EXP file header */
 typedef struct tagoldPharLap
 {
-  uint8_t            plSignature[2];   /**< "MP" 0x4D 0x50 */
-  uint16_t           plSizeRemaind;    /**< remainder of image size / page size (page size = 512h) */
-  uint16_t           plImageSize;      /**< size of image in pages */
-  uint16_t           plNRelocs;        /**< number of relocation items */
-  uint16_t           plHeadSize;       /**< header size in paragraphs */
-  uint16_t           plMinExtraPages;  /**< minimum number of extra 4K pages to be allocated at the end of program, when it is loaded */
-  uint16_t           plMaxExtraPages;  /**< maximum number of extra 4K pages to be allocated at the end of program, when it is loaded */
-  uint32_t           plESP;            /**< initial ESP */
-  uint16_t           plCheckSum;       /**< check sum of file */
-  uint32_t           plEIP;            /**< initial EIP */
-  uint16_t           plFirstReloc;     /**< offset of first relocation item */
-  uint16_t           plNOverlay;       /**< overlay number */
-  uint16_t           plReserved;       /**< (???) wants to be 1 */
+  tUInt8            plSignature[2];   /**< "MP" 0x4D 0x50 */
+  tUInt16           plSizeRemaind;    /**< remainder of image size / page size (page size = 512h) */
+  tUInt16           plImageSize;      /**< size of image in pages */
+  tUInt16           plNRelocs;        /**< number of relocation items */
+  tUInt16           plHeadSize;       /**< header size in paragraphs */
+  tUInt16           plMinExtraPages;  /**< minimum number of extra 4K pages to be allocated at the end of program, when it is loaded */
+  tUInt16           plMaxExtraPages;  /**< maximum number of extra 4K pages to be allocated at the end of program, when it is loaded */
+  tUInt32           plESP;            /**< initial ESP */
+  tUInt16           plCheckSum;       /**< check sum of file */
+  tUInt32           plEIP;            /**< initial EIP */
+  tUInt16           plFirstReloc;     /**< offset of first relocation item */
+  tUInt16           plNOverlay;       /**< overlay number */
+  tUInt16           plReserved;       /**< (???) wants to be 1 */
 }oldPharLap;
 
 /** Format of new Phar Lap .EXP file header */
 typedef struct tagnewPharLap
 {
-  uint8_t            plSignature[2];   /**< "P2" for 286 .EXP and "P3" for 386 .EXP */
-  uint16_t           plLevel;          /**< 0x01 - flat model 0x02 - multisegmented file */
-  uint16_t           plHeaderSize;
-  uint32_t           plFileSize;       /**< Size of file in bytes */
-  uint16_t           plCheckSum;
-  uint32_t           plRunTimeParms;   /**< offset of run-time parameters within file */
-  uint32_t           plRunTimeSize;    /**< size of run-time parameters in bytes */
-  uint32_t           plRelocOffset;    /**< offset of relocation table within file */
-  uint32_t           plRelocSize;      /**< size of relocation table in bytes */
-  uint32_t           plSegInfoOffset;  /**< offset of segment information table within file */
-  uint32_t           plSegInfoSize;    /**< size of segment information table in bytes */
-  uint16_t           plSegEntrySize;   /**< size of segment information table entry in bytes */
-  uint32_t           plImageOffset;    /**< offset of load image within file */
-  uint32_t           plImageSize;      /**< size of load image on disk */
-  uint32_t           plSymTabOffset;   /**< offset of symbol table within file */
-  uint32_t           plSymTabSize;     /**< size of symbol table in bytes */
-  uint32_t           plGDTOffset;      /**< offset of GDT within load image */
-  uint32_t           plGDTSize;        /**< size of GDT in bytes */
-  uint32_t           plLDTOffset;      /**< offset of LDT within load image */
-  uint32_t           plLDTSize;        /**< size of LDT in bytes */
-  uint32_t           plIDTOffset;      /**< offset of IDT within load image */
-  uint32_t           plIDTSize;        /**< size of IDT in bytes */
-  uint32_t           plTSSOffset;      /**< offset of TSS within load image */
-  uint32_t           plTSSSize;        /**< size of TSS in bytes */
-  uint32_t           plMinExtraPages;  /**< minimum number of extra 4K pages to be allocated at the end of program, level 1 only */
-  uint32_t           plMaxExtraPages;  /**< maximum number of extra 4K pages to be allocated at the end of program, level 1 only */
-  uint32_t           plBase;           /**< base load offset (level 1 executables only) */
-  uint32_t           plESP;            /**< initial ESP */
-  uint16_t           plSS;             /**< initial SS */
-  uint32_t           plEIP;            /**< initial EIP */
-  uint16_t           plCS;             /**< initial CS */
-  uint16_t           plLDT;            /**< initial LDT */
-  uint16_t           plTSS;            /**< initial TSS */
-  uint16_t           plFlags;          /**< bit 0: load image is packed */
-				     /**< bit 1: 32-bit checksum is present */
-				     /**< bits 4-2: type of relocation table */
-  uint32_t           plMemReq;         /**< memory requirements for load image */
-  uint32_t           plChecksum32;     /**< 32-bit checksum (optional) */
-  uint32_t           plStackSize;      /**< size of stack segment in bytes */
-  uint8_t            plReserv[256];
+  tUInt8            plSignature[2];   /**< "P2" for 286 .EXP and "P3" for 386 .EXP */
+  tUInt16           plLevel;          /**< 0x01 - flat model 0x02 - multisegmented file */
+  tUInt16           plHeaderSize;
+  tUInt32           plFileSize;       /**< Size of file in bytes */
+  tUInt16           plCheckSum;
+  tUInt32           plRunTimeParms;   /**< offset of run-time parameters within file */
+  tUInt32           plRunTimeSize;    /**< size of run-time parameters in bytes */
+  tUInt32           plRelocOffset;    /**< offset of relocation table within file */
+  tUInt32           plRelocSize;      /**< size of relocation table in bytes */
+  tUInt32           plSegInfoOffset;  /**< offset of segment information table within file */
+  tUInt32           plSegInfoSize;    /**< size of segment information table in bytes */
+  tUInt16           plSegEntrySize;   /**< size of segment information table entry in bytes */
+  tUInt32           plImageOffset;    /**< offset of load image within file */
+  tUInt32           plImageSize;      /**< size of load image on disk */
+  tUInt32           plSymTabOffset;   /**< offset of symbol table within file */
+  tUInt32           plSymTabSize;     /**< size of symbol table in bytes */
+  tUInt32           plGDTOffset;      /**< offset of GDT within load image */
+  tUInt32           plGDTSize;        /**< size of GDT in bytes */
+  tUInt32           plLDTOffset;      /**< offset of LDT within load image */
+  tUInt32           plLDTSize;        /**< size of LDT in bytes */
+  tUInt32           plIDTOffset;      /**< offset of IDT within load image */
+  tUInt32           plIDTSize;        /**< size of IDT in bytes */
+  tUInt32           plTSSOffset;      /**< offset of TSS within load image */
+  tUInt32           plTSSSize;        /**< size of TSS in bytes */
+  tUInt32           plMinExtraPages;  /**< minimum number of extra 4K pages to be allocated at the end of program, level 1 only */
+  tUInt32           plMaxExtraPages;  /**< maximum number of extra 4K pages to be allocated at the end of program, level 1 only */
+  tUInt32           plBase;           /**< base load offset (level 1 executables only) */
+  tUInt32           plESP;            /**< initial ESP */
+  tUInt16           plSS;             /**< initial SS */
+  tUInt32           plEIP;            /**< initial EIP */
+  tUInt16           plCS;             /**< initial CS */
+  tUInt16           plLDT;            /**< initial LDT */
+  tUInt16           plTSS;            /**< initial TSS */
+  tUInt16           plFlags;          /**< bit 0: load image is packed */
+                                     /**< bit 1: 32-bit checksum is present */
+                                     /**< bits 4-2: type of relocation table */
+  tUInt32           plMemReq;         /**< memory requirements for load image */
+  tUInt32           plChecksum32;     /**< 32-bit checksum (optional) */
+  tUInt32           plStackSize;      /**< size of stack segment in bytes */
+  tUInt8            plReserv[256];
 }newPharLap;
 
 typedef struct tagPLSegInfo
 {
-  uint16_t           siSelector;       /**< selector number */
-  uint16_t           siFlags;
-  uint32_t           siBaseOff;        /**< base offset of selector */
-  uint32_t           siMinAlloc;       /**< minimum number of extra bytes to be allocated to the segment */
+  tUInt16           siSelector;       /**< selector number */
+  tUInt16           siFlags;
+  tUInt32           siBaseOff;        /**< base offset of selector */
+  tUInt32           siMinAlloc;       /**< minimum number of extra bytes to be allocated to the segment */
 }PLSegInfo;
 
 typedef struct tagPLRunTimeParms
 {
-  uint8_t            rtSignature[2];   /**< "DX" 44h 58h */
-  uint16_t           rtMinRModeParms;  /**< minimum number of real-mode params to leave free at run time */
-  uint16_t           rtMaxRModeParms;  /**< maximum number of real-mode params to leave free at run time */
-  uint16_t           rtMinIBuffSize;   /**< minimum interrupt buffer size in KB */
-  uint16_t           rtMaxIBuffSize;   /**< maximum interrupt buffer size in KB */
-  uint16_t           rtNIStacks;       /**< number of interrupt stacks */
-  uint16_t           rtIStackSize;     /**< size in KB of each interrupt stack */
-  uint32_t           rtEndRModeOffset; /**< offset of byte past end of real-mode code and data */
-  uint16_t           rtCallBuffSize;   /**< size in KB of call buffers */
-  uint16_t           rtFlags;
-				     /**< bit 0: file is virtual memory manager */
-				     /**< bit 1: file is a debugger */
-  uint16_t           rtUnprivFlags;    /**< unprivileged flag (if nonzero, executes at ring 1, 2, or 3) */
-  uint8_t            rtReserv[104];
+  tUInt8            rtSignature[2];   /**< "DX" 44h 58h */
+  tUInt16           rtMinRModeParms;  /**< minimum number of real-mode params to leave free at run time */
+  tUInt16           rtMaxRModeParms;  /**< maximum number of real-mode params to leave free at run time */
+  tUInt16           rtMinIBuffSize;   /**< minimum interrupt buffer size in KB */
+  tUInt16           rtMaxIBuffSize;   /**< maximum interrupt buffer size in KB */
+  tUInt16           rtNIStacks;       /**< number of interrupt stacks */
+  tUInt16           rtIStackSize;     /**< size in KB of each interrupt stack */
+  tUInt32           rtEndRModeOffset; /**< offset of byte past end of real-mode code and data */
+  tUInt16           rtCallBuffSize;   /**< size in KB of call buffers */
+  tUInt16           rtFlags;
+                                     /**< bit 0: file is virtual memory manager */
+                                     /**< bit 1: file is a debugger */
+  tUInt16           rtUnprivFlags;    /**< unprivileged flag (if nonzero, executes at ring 1, 2, or 3) */
+  tUInt8            rtReserv[104];
 }PLRunTimeParms;
 
 typedef struct tagPLRepeatBlock
 {
-  uint16_t           rbCount;          /**< byte count */
-  uint8_t            rbString[1];      /**< repeat string length */
+  tUInt16           rbCount;          /**< byte count */
+  tUInt8            rbString[1];      /**< repeat string length */
 }PLRepeatBlock;
 
 #ifdef __HAVE_PRAGMA_PACK__
 #pragma pack()
 #endif
-} // namespace	usr
+
 #endif

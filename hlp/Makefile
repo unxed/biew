@@ -2,7 +2,6 @@
 
 include ../config.mak
 
-sep := $(if $(filter win32 os2 dos, $(HOST)),\\,/)
 SUBDIRS = lzss beyehlp
 
 DO_MAKE = @ for i in $(SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
@@ -22,7 +21,6 @@ endif
 	$(MAKE) -C $@
 
 install:
-	$(INSTALL) -D -b -c -m 644 beye.hlp $(DESTDIR)$(DATADIR)/beye.hlp
 	$(DO_IMAKE)
 
 clean:
@@ -31,15 +29,15 @@ clean:
 
 distclean:
 	$(DO_MAKE)
-	rm -f beye.hlp
 	rm -f config.h config.mak
 
 uninstall:
-	rm -f $(DESTDIR)$(DATADIR)/*
 	$(DO_IMAKE)
 
 dep:
 	$(DO_MAKE)
 
 help:
-	(.$(sep)beyehlp$(sep)beyehlp$(EXESUF) .$(sep)lzss$(sep)lzss$(EXESUF) beyehlp.prj)
+	(beyehlp/beyehlp lzss/lzss beyehlp.prj)
+	$(RM) -f ../bin_rc/beye.hlp
+	$(CP) beye.hlp ../bin_rc

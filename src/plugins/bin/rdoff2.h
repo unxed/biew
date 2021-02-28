@@ -1,5 +1,5 @@
 /**
- * @namespace	usr_plugins_auto
+ * @namespace   beye_plugins_auto
  * @file        plugins/bin/rdoff2.h
  * @brief       This file contains RDOFF v2 file definitions.
  * @version     -
@@ -17,9 +17,10 @@
 #ifndef __RDOFF_INC
 #define __RDOFF_INC
 
-#include "config.h"
+#ifndef __SYS_DEP_H
+#include "_sys_dep.h"
+#endif
 
-namespace	usr {
 #ifdef __HAVE_PRAGMA_PACK__
 #pragma pack(1)
 #endif
@@ -27,14 +28,14 @@ namespace	usr {
 /** RDOFF v2 fixed header */
 typedef struct tag_rdoff2_Header
 {
-  uint8_t  id[6]; /**< RDOFF2 or RDOFF\02 */
-  uint32_t image_len;
-  uint32_t header_len;
+  tUInt8  id[6]; /**< RDOFF2 or RDOFF\02 */
+  tUInt32 image_len;
+  tUInt32 header_len;
 }rdoff2_Header;
 
 
 #ifdef __HAVE_PRAGMA_PACK__
 #pragma pack()
 #endif
-} // namespace	usr
+
 #endif

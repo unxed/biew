@@ -1,4 +1,4 @@
- LX introduction
+ LX introduction 
      IBM OS/2 32 bit %BLinear eXecutable%b Module Format  (LX)  from  Boca
 Programming Center. Boca Raton, Florida.
      Document is intended to describe the interface that  is  used  by
@@ -24,7 +24,7 @@ was taken, and the result was OS/2.
 
 Sorry! LX format in gamma-stage
 
-		%BFunction keys%b
+                %BFunction keys%b
 
 %IAltF1%i   -  Display this screen
 %IAltF2%i   -  Display references to external modules
@@ -37,12 +37,12 @@ Sorry! LX format in gamma-stage
 %IAltF9%i   -  Display list of map tables
 %IAltF10%i  -  Display list of object definitions
 
-		%BAddress Resolving%b
+                %BAddress Resolving%b
 
 %ILXH :xxxx%i - Current file position is LX header
-	    %Uxxxx%u - local offset within LX header
+            %Uxxxx%u - local offset within LX header
 %ILXOD:xxxx%i - Current file position is object definition table
-	    %Uxxxx%u - local offset within ObjDef table
+            %Uxxxx%u - local offset within ObjDef table
 %ILXPD:xxxx%i - Current file position is page map table
-	    %Uxxxx%u - local offset within page map table
+            %Uxxxx%u - local offset within page map table
 %I.xxxxxxxx%i - Virtual address

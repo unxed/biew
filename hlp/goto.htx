@@ -2,8 +2,10 @@
    This function allows to move to a given offset within the file.
 Offset can be:
 
-%BFrom top of file%b- Given offset is treated as offset from start of file.
-%BFrom current pos%b- Given offset is treated as offset from current position.
+%BAbsolute%b        - Given offset is treated as absolute offset from start
+                  of file.
+%BRelative%b        - Given offset is treated as relative offset from current
+                  position.
 %BRelatively EOF%b  - Given offset is treated as offset relatively end of
                   the file. Only negative values shall be accepted.
 %BVirtual%b         - Given offset is treated as virtual address defined by

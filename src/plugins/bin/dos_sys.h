@@ -1,5 +1,5 @@
 /**
- * @namespace	usr_plugins_auto
+ * @namespace   beye_plugins_auto
  * @file        plugins/bin/mz.h
  * @brief       This file contains DOS driver executable file definitions.
  * @version     -
@@ -17,23 +17,24 @@
 #ifndef __DOS_SYS_INC
 #define __DOS_SYS_INC
 
-#include "config.h"
+#ifndef __BEYEUTIL__H
+#include "beyeutil.h"
+#endif
 
-namespace	usr {
 #ifdef __HAVE_PRAGMA_PACK__
 #pragma pack(1)
 #endif
 
 typedef struct tagDOSDRIVER
 {
-  uint16_t ddAttribute;
-  uint16_t ddStrategyOff;
-  uint16_t ddInterruptOff;
-  uint8_t  ddName[8];
+  tUInt16 ddAttribute;
+  tUInt16 ddStrategyOff;
+  tUInt16 ddInterruptOff;
+  tUInt8  ddName[8];
 }DOSDRIVER;
 
 #ifdef __HAVE_PRAGMA_PACK__
 #pragma pack()
 #endif
-} // namespace	usr
+
 #endif

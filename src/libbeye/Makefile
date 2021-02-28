@@ -1,53 +1,62 @@
 include ../../config.mak
 
-CXXFLAGS = -I. -I.. -I../.. $(HOST_CFLAGS)
-LDXXFLAGS = $(HOST_LDFLAGS)
+CFLAGS = -I.. $(CDEFOS) $(CDEFSYS) $(HOST_CFLAGS)
+LDFLAGS = $(OSLDEF) $(HOST_LDFLAGS)
 
-DO_MAKE = @ for i in $(SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
-DO_ALL  = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
-SUBDIRS = osdep sysdep
+LIBNAME = $(LIBPREFIX)beye.$(LIBEXT)
 
-LIBNAME = $(LIBPREFIX)beye.a
+SRCS= bbio.c \
+      file_ini.c \
+      libbeye.c \
+      pmalloc.c \
+      tw_class.c \
+      twin.c \
+      sysdep/$(MACHINE)/aclib.c \
+      sysdep/$(MACHINE)/cpu_info.c \
+      sysdep/$(MACHINE)/$(HOST)/fileio.c \
+      sysdep/$(MACHINE)/$(HOST)/keyboard.c \
+      sysdep/$(MACHINE)/$(HOST)/mmfio.c \
+      sysdep/$(MACHINE)/$(HOST)/mouse.c \
+      sysdep/$(MACHINE)/$(HOST)/misc.c \
+      sysdep/$(MACHINE)/$(HOST)/nls.c \
+      sysdep/$(MACHINE)/$(HOST)/os_dep.c \
+      sysdep/$(MACHINE)/$(HOST)/timer.c \
+      sysdep/$(MACHINE)/$(HOST)/vio.c
 
-SRCS= bbio.cpp \
-      binary_packet.cpp \
-      bstream.cpp \
-      file_ini.cpp \
-      libbeye.cpp \
-      mmfile.cpp \
-      mp_malloc.cpp \
-      tw_class.cpp \
-      twindow.cpp
 
-OBJS=$(SRCS:.cpp=.o)
+ifeq ($(HOST),qnx)
+ASMS = \
+      sysdep/$(MACHINE)/$(HOST)/3rto3s.o\
+      sysdep/$(MACHINE)/$(HOST)/3sto3r.o
+endif
 
-.SUFFIXES: .cpp .o
+OBJS=$(SRCS:.c=.o)
+AOBJS=$(ASMS:.asm=.o)
 
-.PHONY: $(SUBDIRS)
+.SUFFIXES: .asm .c .o
 
-all:    dep $(LIBNAME) $(SUBDIRS)
+# .PHONY: all clean
 
-$(SUBDIRS):
-	$(DO_ALL)
+.c.o:
+	$(CC) -c $(CFLAGS) -o $@ $<
+.asm.o:
+	$(CC) -c -o $@ $<
 
-.cpp.o:
-	$(CXX) -c $(CXXFLAGS) -o $@ $<
+$(LIBNAME):     $(OBJS) $(AOBJS)
+	$(AR) $(LIBNAME) $(OBJS) $(AOBJS)
 
-$(LIBNAME):     $(OBJS)
-	$(AR) $(LIBNAME) $(OBJS)
+all:    $(LIBNAME)
 
 clean:
-	$(DO_MAKE)
-	rm -f $(OBJS) *.a *~
+	rm -f *.o *.a *~
 
-distclean: clean
-	rm -f Makefile.bak .depend
-	$(DO_MAKE)
+distclean:
+	rm -f Makefile.bak *.o *.a *~ .depend
 
-dep:    .depend
+dep:    depend
 
-.depend:
-	$(CXX) -MM $(CXXFLAGS) $(SRCS) 1>.depend
+depend:
+	$(CC) -MM $(CFLAGS) $(SRCS) 1>.depend
 
 #
 # include dependency files if they exist

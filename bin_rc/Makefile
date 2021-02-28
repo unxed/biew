@@ -8,6 +8,7 @@ clean:
 distclean:
 	echo "nothing to do"
 install:
+	$(INSTALL) -D -b -c -m 644 beye.hlp $(DESTDIR)$(DATADIR)/beye.hlp
 	mkdir --parents $(DESTDIR)$(DATADIR)/skn
 	$(INSTALL) -D -c -m 644 skn/*.skn $(DESTDIR)$(DATADIR)/skn
 	mkdir --parents $(DESTDIR)$(DATADIR)/syntax
@@ -16,6 +17,7 @@ install:
 	$(INSTALL) -D -c -m 644 xlt/russian/*.xlt $(DESTDIR)$(DATADIR)/xlt/russian
 	$(INSTALL) -D -c -m 644 xlt/*.xlt xlt/readme $(DESTDIR)$(DATADIR)/xlt
 uninstall:
+	rm -f $(DESTDIR)$(DATADIR)/*
 	$(RM) $(DESTDIR)$(DATADIR)/skn/*
 	rmdir -p --ignore-fail-on-non-empty $(DESTDIR)$(DATADIR)/skn
 	$(RM) $(DESTDIR)$(DATADIR)/syntax/*

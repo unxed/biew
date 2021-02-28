@@ -1,5 +1,5 @@
 /**
- * @namespace	usr
+ * @namespace   beye
  * @file        tstrings.h
  * @brief       This file contains start of work for NLS support by BEYE.
  * @version     -
@@ -17,13 +17,10 @@
 #ifndef __TSTRINGS__H
 #define __TSTRINGS__H
 
-#include "../version.h"
-
-namespace	usr {
 /** @def BEYE_VERSION
     Ver.SubVer.ExtraVer-ReleaseLevel.Test_FixPak_Level
   */
-extern const char* BEYE_VERSION;
+#define BEYE_VERSION "1.0.0"
 
 extern const char   msgUndef[];
 extern const char   msgFatalError[];
@@ -48,13 +45,19 @@ extern const char * msgHeadDesc[];
 extern const char * msgFindOpt[];
 extern const char * msgFindOpt2[];
 
-extern const char* BEYE_VER_MSG;
+#if defined(__WIN32__) && defined(_MSC_VER)
+  #define BEYE_VER_MSG          " Binary EYE v "BEYE_VERSION"-i386.Win32 Build: " __DATE__ " "
+#else
+  #define BEYE_VER_MSG          " Binary EYE v "BEYE_VERSION"-"__CPU_NAME__"."__OS_NAME__" Build: "__DATE__" "
+#endif
 
 extern const char UNDEFINE[];
 extern const char FATAL_ERROR[];
 
 extern const char ISR_JUMP[];
 extern const char INT_NUMBER[];
+extern const char GO_ABS_SHIFT[];
+extern const char GO_REL_SHIFT[];
 extern const char TYPE_SHIFT[];
 extern const char DIG_EVALUTOR[];
 extern const char DIG_OPERATORS[];
@@ -115,5 +118,4 @@ extern const char EXPAND_FAIL[];
 extern const char TRUNC_FAIL[];
 
 extern const char NOTHING_EDIT[];
-} // namespace	usr
 #endif

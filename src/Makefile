@@ -14,63 +14,112 @@
 # This software is redistributable under the licence given in the file       #
 # "Licence" distributed in the BEYE archive.                                 #
 ##############################################################################
+HOST_CFLAGS=
+HOST_LDFLAGS=
+
 include ../config.mak
 
-SUBDIRS=addons plugins libbeye
+SUBDIRS=libbeye
 
 DO_MAKE = @ for i in $(SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
 DO_ALL  = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 
-CXXFLAGS = -I. -I../hlp $(HOST_CFLAGS)
-LDXXFLAGS = $(HOST_LDFLAGS)
+CFLAGS = -I../hlp $(CDEFOS) $(CDEFSYS) $(HOST_CFLAGS)
+LDFLAGS = $(OSLDEF) $(HOST_LDFLAGS)
 
 ###########################################################################
 # TARGET: put name of executable image here                               #
 ###########################################################################
-TARGET = $(PROGNAME)
-BEYELIB = ./libbeye/$(LIBPREFIX)beye.$(LIBEXT)
+TARGET = beye
+BEYELIB = ./libbeye/$(LIBPREFIX)$(TARGET).$(LIBEXT)
 ##########################################################################
 #                Please not modify contents below                        #
 ##########################################################################
 
 INCS = -I.
-LIBS = addons/libaddons.a \
-       plugins/libplugins.a \
-       plugins/disasm/libdisasm.a \
-       libbeye/libbeye.a \
-       libbeye/sysdep/libsysdep.a \
-       libbeye/osdep/libosdep.a
-LIBS += $(EXTRALIBS)
-SRCS = bconsole.cpp\
-    beyehelp.cpp\
-    beyeutil.cpp\
-    codeguid.cpp\
-    colorset.cpp\
-    dialogs.cpp\
-    editors.cpp\
-    events.cpp\
-    fileutil.cpp\
-    info_win.cpp\
-    listbox.cpp \
-    main.cpp\
-    mainloop.cpp\
-    search.cpp\
-    setup.cpp\
-    tstrings.cpp\
-    udn.cpp
+LIBS = -L./libbeye -l$(TARGET) $(OS_LIBS)
+SRCS = \
+addendum.c\
+bconsole.c\
+beye.c\
+beyehelp.c\
+beyeutil.c\
+bin_util.c\
+bmfile.c\
+codeguid.c\
+colorset.c\
+dialogs.c\
+editors.c\
+events.c\
+fileutil.c\
+info_win.c\
+mainloop.c\
+refs.c\
+search.c\
+setup.c\
+sysinfo.c\
+tstrings.c\
+addons/sys/ascii.c\
+addons/sys/consinfo.c\
+addons/sys/cpu_perf.c\
+addons/sys/inview.c\
+addons/tools/dig_conv.c\
+addons/tools/eval.c\
+plugins/bin/aout.c\
+plugins/bin/arch.c\
+plugins/bin/asf.c\
+plugins/bin/avi.c\
+plugins/bin/bin.c\
+plugins/bin/bmp.c\
+plugins/bin/coff386.c\
+plugins/bin/dos_sys.c\
+plugins/bin/elf386.c\
+plugins/bin/jpeg.c\
+plugins/bin/jvmclass.c\
+plugins/bin/le.c\
+plugins/bin/lmf.c\
+plugins/bin/lx.c\
+plugins/bin/mov.c\
+plugins/bin/mp3.c\
+plugins/bin/mpeg.c\
+plugins/bin/mz.c\
+plugins/bin/ne.c\
+plugins/bin/nlm386.c\
+plugins/bin/opharlap.c\
+plugins/bin/pe.c\
+plugins/bin/pharlap.c\
+plugins/bin/rdoff.c\
+plugins/bin/rdoff2.c\
+plugins/bin/realmedia.c\
+plugins/bin/sis.c\
+plugins/bin/sisx.c\
+plugins/bin/wav.c\
+plugins/binmode.c\
+plugins/disasm.c\
+plugins/hexmode.c\
+plugins/textmode.c\
+plugins/nls/russian.c\
+plugins/disasm/null_da.c\
+plugins/disasm/arm/arm.c\
+plugins/disasm/arm/arm16.c\
+plugins/disasm/arm/arm32.c\
+plugins/disasm/avr/avr.c\
+plugins/disasm/ppc/ppc.c\
+plugins/disasm/java/java.c\
+plugins/disasm/ix86/ix86.c\
+plugins/disasm/ix86/ix86_fpu.c\
+plugins/disasm/ix86/ix86_fun.c
 
-OBJS=$(SRCS:.cpp=.o)
+OBJS=$(SRCS:.c=.o)
 
 HLP_SUBDIRS=tools/beyehlp tools/lzss
 DO_HELP = @ for i in $(HLP_SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
 
-.SUFFIXES: .cpp .o
+all:     $(SUBDIRS) $(TARGET)
 
-.PHONY: all $(SUBDIRS)
+.PHONY: subdirs $(SUBDIRS)
 
-all:     dep $(LIBS) $(OBJS) $(TARGET)
-
-$(LIBS): $(SUBDIRS)
+subdirs: $(SUBDIRS)
 
 $(SUBDIRS):
 ifeq ($(filter 3.81,$(firstword $(sort $(MAKE_VERSION) \ 3.81))),)
@@ -82,17 +131,19 @@ endif
 clean:
 	$(DO_MAKE)
 	$(RM) $(OBJS)
-	$(RM) $(TARGET)$(EXESUF)
-	$(RM) .depend
+	$(RM) $(TARGET)
+	$(RM) beye.map
+	$(RM) *.err
 
 distclean: clean
 	$(DO_MAKE)
+	$(RM) config.log config.mak
 
-$(TARGET): $(OBJS) $(LIBS)
-	$(CXX) $(LDXXFLAGS) -o $@ $(OBJS) $(LIBS)
+$(TARGET): $(OBJS)
+	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 
-%.o : %.cpp
-	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
+%.o : %.c
+	$(CC) $(CFLAGS) $(INCS) -c $< -o $@
 
 install:
 ifeq ($(INSTALL),)
@@ -105,17 +156,3 @@ endif
 	$(INSTALL) -D -m 755 $(TARGET) $(DESTDIR)$(PREFIX)/bin/$(TARGET)
 uninstall:
 	$(RM) $(DESTDIR)$(PREFIX)/bin/$(TARGET)
-
-dep:    .depend
-
-.depend:
-	$(CXX) -MM $(CXXFLAGS) $(SRCS) 1>.depend
-	$(DO_MAKE)
-
-#
-# include dependency files if they exist
-#
-ifneq ($(wildcard .depend),)
-include .depend
-endif
-
